@@ -1,11 +1,32 @@
-<div align="center">
+# Wi-Fi Sleep Timer | مؤقت نوم الواي فاي
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+تطبيق أندرويد خفيف وعملي يقوم بإيقاف تشغيل شبكة الواي فاي تلقائيًا فور انتهاء المؤقت.
 
-  <h1>Built with AI Studio</h2>
+A lightweight native Android application that automatically turns off Wi-Fi when the sleep timer reaches 00:00.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+---
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## 📱 تحميل وتثبيت التطبيق على هاتفك (How to Install on Phone)
 
-</div>
+### الطريقة الأولى: عبر GitHub Actions (تلقائي)
+1. بعد رفع الكود إلى مستودعك على GitHub، توجه إلى تبويب **Actions** في صفحة المستودع.
+2. ستجد عملية بناء تلقائية باسم **Build Android APK**.
+3. عند اكتمال البناء (علامة صح خضراء)، اضغط على البناء وانزل لأسفل إلى قسم **Artifacts**.
+4. حمّل ملف `Wi-Fi-Sleep-Timer-APK.zip` وفك ضغطه على هاتفك ثم افتح ملف `app-debug.apk` للتثبيت.
+
+### الطريقة الثانية: عبر Android Studio
+1. انسخ المستودع:
+   ```bash
+   git clone https://github.com/your-username/wifi-sleep-timer.git
+   ```
+2. افتح المشروع في Android Studio.
+3. صل هاتفك عبر كابل USB أو قم باختيار **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+
+---
+
+## ⚙️ مميزات التطبيق (Features)
+- 🌙 **واجهة ليلية داكنة (Dark Mode)** مريحة للعينين قبل النوم.
+- ⏱️ **أزرار سريعة للمدد**: 5، 10، 15، 30، 45، 60 دقيقة مع إمكانية زيادة/إنقاص الدقائق أو تجربة سريعة (10 ثوانٍ).
+- 🔄 **خدمة تعمل في الخلفية (Foreground Service)**: يستمر العداد حتى لو أغلقت الشاشة.
+- ⚡ **إيقاف فوري وتلقائي للواي فاي**: ينطفئ الواي فاي فوراً دون الحاجة لتدخل يدوي عند 00:00.
+- 🌐 **دعم كامل للغتين**: العربية والإنجليزية مع زر تبديل فوري.

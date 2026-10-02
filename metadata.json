@@ -1,0 +1,6 @@
+{
+  "name": "Wi-Fi Sleep Timer",
+  "description": "A clean, dark-mode Android countdown timer that automatically turns off or prompts to disable Wi-Fi when the timer reaches 00:00.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
