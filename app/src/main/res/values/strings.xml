@@ -50,6 +50,15 @@
     <string name="api_q_note">Wi-Fi will turn off automatically as soon as the timer reaches 00:00.</string>
     <string name="api_legacy_note">Wi-Fi will turn off automatically as soon as the timer reaches 00:00.</string>
 
+    <!-- Accessibility & Direct Auto Shutoff -->
+    <string name="accessibility_service_label">Wi-Fi Sleep Timer (Auto Shutoff)</string>
+    <string name="accessibility_service_desc">Enables the app to automatically toggle Wi-Fi OFF when your sleep timer countdown reaches 00:00 without requiring manual interaction.</string>
+    <string name="auto_off_status_active">Direct Auto Shutoff: Active</string>
+    <string name="auto_off_status_inactive">Enable Direct Auto Shutoff</string>
+    <string name="auto_off_card_desc">On modern Android (10–15), grant this one-time permission to allow the app to turn Wi-Fi OFF 100% automatically at 00:00 without touching the screen.</string>
+    <string name="auto_off_button_enable">Enable Auto Shutoff Now</string>
+    <string name="auto_off_active_subtitle">Wi-Fi will turn off automatically at 00:00 without prompts.</string>
+
     <!-- Navigation -->
     <string name="nav_timer">Timer</string>
     <string name="nav_data_usage">Data Usage</string>

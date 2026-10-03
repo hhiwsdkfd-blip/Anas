@@ -50,6 +50,15 @@
     <string name="api_q_note">سيتم إيقاف الواي فاي تلقائياً بالكامل فور وصول المؤقت إلى 00:00.</string>
     <string name="api_legacy_note">سيتم إيقاف الواي فاي تلقائياً بالكامل فور وصول المؤقت إلى 00:00.</string>
 
+    <!-- Accessibility & Direct Auto Shutoff -->
+    <string name="accessibility_service_label">مؤقت نوم الواي فاي (إطفاء تلقائي)</string>
+    <string name="accessibility_service_desc">تتيح للتطبيق إيقاف مفتاح الواي فاي تلقائياً بالكامل فور وصول المؤقت إلى 00:00 دون الحاجة للمس الشاشة أو إرسال إشعارات يدوية.</string>
+    <string name="auto_off_status_active">الإطفاء التلقائي الفوري: مفعل بنجاح ✅</string>
+    <string name="auto_off_status_inactive">تفعيل الإطفاء التلقائي المباشر للواي فاي ⚡</string>
+    <string name="auto_off_card_desc">في أنظمة أندرويد الحديثة، يتطلب النظام إذناً خاصاً للتحكم بالواي فاي تلقائياً. قم بتفعيل هذا الخيار لمرة واحدة ليتم إطفاء الواي فاي تلقائياً بالكامل عند 00:00 دون الحاجة للمس الشاشة إطلاقاً.</string>
+    <string name="auto_off_button_enable">تفعيل الإطفاء التلقائي الآن</string>
+    <string name="auto_off_active_subtitle">سيتم إطفاء الواي فاي تلقائياً فور وصول المؤقت إلى 00:00 دون إشعارات أو لمس الشاشة.</string>
+
     <!-- Navigation -->
     <string name="nav_timer">مؤقت النوم</string>
     <string name="nav_data_usage">استهلاك البيانات</string>

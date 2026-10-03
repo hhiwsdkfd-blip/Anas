@@ -57,6 +57,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DataUsage
 import androidx.compose.material.icons.filled.HourglassTop
@@ -64,6 +66,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ScreenRotation
@@ -123,6 +126,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.theme.AlertCoral
 import com.example.ui.theme.MyApplicationTheme
@@ -235,6 +241,24 @@ fun WifiSleepTimerScreen() {
   // Custom Duration Dialog State
   var showCustomDurationDialog by remember { mutableStateOf(false) }
   var showAboutDeveloperDialog by remember { mutableStateOf(false) }
+
+  var isAutoOffEnabled by remember {
+    mutableStateOf(WifiAutomationService.isAccessibilityPermissionGranted(baseContext))
+  }
+
+  val lifecycleOwner = LocalLifecycleOwner.current
+  DisposableEffect(lifecycleOwner) {
+    val observer =
+      LifecycleEventObserver { _, event ->
+        if (event == Lifecycle.Event.ON_RESUME) {
+          isAutoOffEnabled = WifiAutomationService.isAccessibilityPermissionGranted(baseContext)
+        }
+      }
+    lifecycleOwner.lifecycle.addObserver(observer)
+    onDispose {
+      lifecycleOwner.lifecycle.removeObserver(observer)
+    }
+  }
 
   // Observe real-time system Wi-Fi state changes
   DisposableEffect(baseContext) {
@@ -715,7 +739,16 @@ fun WifiSleepTimerScreen() {
             }
           }
 
-          Spacer(modifier = Modifier.height(24.dp))
+          Spacer(modifier = Modifier.height(20.dp))
+
+          // Direct Auto-Off Accessibility Status Card
+          AutoOffSettingCard(
+            isAutoOffEnabled = isAutoOffEnabled,
+            str = str,
+            onEnableClick = { WifiAutomationService.openAccessibilitySettings(baseContext) },
+          )
+
+          Spacer(modifier = Modifier.height(16.dp))
 
           // Sleep & Battery Savings Card with Toggles
           SleepStatsAndFeaturesCard(
@@ -926,6 +959,99 @@ private fun TimeCounterColumn(
         ),
     ) {
       Icon(Icons.Filled.Remove, contentDescription = null)
+    }
+  }
+}
+
+@Composable
+private fun AutoOffSettingCard(
+  isAutoOffEnabled: Boolean,
+  str: (Int) -> String,
+  onEnableClick: () -> Unit,
+) {
+  Card(
+    shape = RoundedCornerShape(20.dp),
+    colors = CardDefaults.cardColors(containerColor = NightSurfaceElevated),
+    border =
+      BorderStroke(
+        1.5.dp,
+        if (isAutoOffEnabled) WifiActiveGreen.copy(alpha = 0.6f) else SleepAmber.copy(alpha = 0.7f),
+      ),
+    modifier = Modifier.fillMaxWidth().testTag("auto_off_status_card"),
+  ) {
+    Column(modifier = Modifier.padding(16.dp)) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+      ) {
+        Surface(
+          shape = CircleShape,
+          color = if (isAutoOffEnabled) WifiActiveGreen.copy(alpha = 0.15f) else SleepAmberDim,
+          modifier = Modifier.size(36.dp),
+        ) {
+          Box(contentAlignment = Alignment.Center) {
+            Icon(
+              imageVector = if (isAutoOffEnabled) Icons.Filled.CheckCircle else Icons.Filled.PowerSettingsNew,
+              contentDescription = null,
+              tint = if (isAutoOffEnabled) WifiActiveGreen else SleepAmberBright,
+              modifier = Modifier.size(20.dp),
+            )
+          }
+        }
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            text =
+              if (isAutoOffEnabled) {
+                str(R.string.auto_off_status_active)
+              } else {
+                str(R.string.auto_off_status_inactive)
+              },
+            style = MaterialTheme.typography.titleSmall,
+            color = if (isAutoOffEnabled) WifiActiveGreen else SleepAmberBright,
+            fontWeight = FontWeight.Bold,
+          )
+          Spacer(modifier = Modifier.height(2.dp))
+          Text(
+            text =
+              if (isAutoOffEnabled) {
+                str(R.string.auto_off_active_subtitle)
+              } else {
+                str(R.string.auto_off_card_desc)
+              },
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondaryNight,
+          )
+        }
+      }
+
+      if (!isAutoOffEnabled) {
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+          onClick = onEnableClick,
+          shape = RoundedCornerShape(12.dp),
+          colors =
+            ButtonDefaults.buttonColors(
+              containerColor = SleepAmber,
+              contentColor = NightObsidian,
+            ),
+          modifier =
+            Modifier.fillMaxWidth()
+              .height(44.dp)
+              .testTag("enable_auto_off_button"),
+        ) {
+          Icon(
+            imageVector = Icons.Filled.Bolt,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+          )
+          Spacer(modifier = Modifier.width(6.dp))
+          Text(
+            text = str(R.string.auto_off_button_enable),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+          )
+        }
+      }
     }
   }
 }

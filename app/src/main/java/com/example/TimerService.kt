@@ -118,7 +118,7 @@ class TimerService : Service() {
     countDownTimer?.cancel()
     countDownTimer = null
 
-    val disabledDirectly = disableWifiAutomatically(applicationContext)
+    WifiAutomationService.executeAutoTurnOff(applicationContext)
     recordSleepSession(applicationContext, _timerState.value.totalDurationMillis)
     triggerGentleVibration(applicationContext)
 
@@ -127,11 +127,11 @@ class TimerService : Service() {
         remainingMillis = 0L,
         isRunning = false,
         isFinished = true,
-        requiresPanelPrompt = !disabledDirectly,
+        requiresPanelPrompt = false,
       )
     }
 
-    showCompletionNotification(disabledAutomatically = disabledDirectly)
+    showCompletionNotification(disabledAutomatically = true)
     stopForegroundCompat()
     stopSelf()
   }
@@ -250,14 +250,8 @@ class TimerService : Service() {
     val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     val targetIntent =
-      if (!disabledAutomatically && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        Intent(Settings.Panel.ACTION_WIFI).apply {
-          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-      } else {
-        Intent(this, MainActivity::class.java).apply {
-          flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+      Intent(this, MainActivity::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
       }
 
     val pendingIntent =
@@ -268,12 +262,7 @@ class TimerService : Service() {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
       )
 
-    val bodyText =
-      if (disabledAutomatically) {
-        getString(R.string.notification_body_finished_disabled)
-      } else {
-        getString(R.string.notification_body_finished_panel)
-      }
+    val bodyText = getString(R.string.notification_body_finished_disabled)
 
     val builder =
       NotificationCompat.Builder(this, CHANNEL_ID_FINISHED)
@@ -284,14 +273,6 @@ class TimerService : Service() {
         .setCategory(NotificationCompat.CATEGORY_ALARM)
         .setAutoCancel(true)
         .setContentIntent(pendingIntent)
-
-    if (!disabledAutomatically && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      builder.addAction(
-        android.R.drawable.ic_dialog_info,
-        getString(R.string.notification_action_wifi_panel),
-        pendingIntent,
-      )
-    }
 
     manager.notify(NOTIFICATION_ID_FINISHED, builder.build())
   }
@@ -420,57 +401,15 @@ class TimerService : Service() {
      */
     @Suppress("DEPRECATION")
     fun disableWifiAutomatically(context: Context): Boolean {
+      WifiAutomationService.executeAutoTurnOff(context)
       val wifiManager =
         context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
-      var disabledSuccess = false
-
-      try {
-        if (wifiManager != null) {
-          if (!wifiManager.isWifiEnabled) {
-            disabledSuccess = true
-          } else {
-            val result = wifiManager.setWifiEnabled(false)
-            disabledSuccess = result || !wifiManager.isWifiEnabled
-          }
-        }
-      } catch (_: Exception) {
-        disabledSuccess = false
-      }
-
-      if (!disabledSuccess) {
-        try {
-          Runtime.getRuntime().exec(arrayOf("svc", "wifi", "disable"))
-        } catch (_: Exception) {}
-      }
-
-      if (wifiManager != null && !wifiManager.isWifiEnabled) {
-        disabledSuccess = true
-      }
-
-      if (!disabledSuccess && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val panelIntent =
-          Intent(Settings.Panel.ACTION_WIFI).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-          }
-        try {
-          context.startActivity(panelIntent)
-        } catch (_: Exception) {
-          val fallbackIntent =
-            Intent(Settings.ACTION_WIFI_SETTINGS).apply {
-              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-          try {
-            context.startActivity(fallbackIntent)
-          } catch (_: Exception) {}
-        }
-      }
-
-      return disabledSuccess
+      return wifiManager?.isWifiEnabled == false
     }
 
     @Suppress("DEPRECATION")
     fun disableWifiOrPrompt(context: Context) {
-      disableWifiAutomatically(context)
+      WifiAutomationService.executeAutoTurnOff(context)
     }
   }
 }
