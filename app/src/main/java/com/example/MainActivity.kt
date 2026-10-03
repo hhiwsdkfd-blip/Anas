@@ -7,10 +7,16 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -49,14 +55,20 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DataUsage
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -66,16 +78,24 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -92,7 +112,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -100,6 +119,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.theme.AlertCoral
@@ -115,15 +135,23 @@ import com.example.ui.theme.TextMutedNight
 import com.example.ui.theme.TextPrimaryNight
 import com.example.ui.theme.TextSecondaryNight
 import com.example.ui.theme.WifiActiveGreen
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 data class TimerPreset(
   val labelRes: Int,
   val durationMillis: Long,
   val testTag: String,
 )
+
+enum class MainTab {
+  TIMER,
+  DATA_USAGE
+}
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -144,6 +172,13 @@ fun WifiSleepTimerScreen() {
   var isArabic by rememberSaveable {
     mutableStateOf(Locale.getDefault().language == "ar")
   }
+  var selectedTab by rememberSaveable {
+    mutableStateOf(MainTab.TIMER)
+  }
+
+  BackHandler(enabled = selectedTab != MainTab.TIMER) {
+    selectedTab = MainTab.TIMER
+  }
 
   val localizedResources =
     remember(baseContext, isArabic) {
@@ -158,6 +193,44 @@ fun WifiSleepTimerScreen() {
   val layoutDirection = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
   val timerState by TimerService.timerState.collectAsStateWithLifecycle()
   var isWifiEnabled by remember { mutableStateOf(checkWifiEnabled(baseContext)) }
+
+  // Preferences & Feature Settings
+  val settingsPrefs = remember(baseContext) {
+    baseContext.getSharedPreferences(TimerService.PREFS_SETTINGS, Context.MODE_PRIVATE)
+  }
+  val statsPrefs = remember(baseContext) {
+    baseContext.getSharedPreferences(TimerService.PREFS_STATS, Context.MODE_PRIVATE)
+  }
+
+  var vibrationEnabled by remember {
+    mutableStateOf(settingsPrefs.getBoolean(TimerService.KEY_VIBRATION_ENABLED, true))
+  }
+  var shakeEnabled by remember {
+    mutableStateOf(settingsPrefs.getBoolean(TimerService.KEY_SHAKE_ENABLED, true))
+  }
+
+  // Stats state
+  var totalSessions by remember {
+    mutableIntStateOf(statsPrefs.getInt(TimerService.KEY_TOTAL_SESSIONS, 0))
+  }
+  var totalMinutesSaved by remember {
+    mutableLongStateOf(statsPrefs.getLong(TimerService.KEY_TOTAL_MINUTES_SAVED, 0L))
+  }
+  var lastTimestamp by remember {
+    mutableLongStateOf(statsPrefs.getLong(TimerService.KEY_LAST_TIMESTAMP, 0L))
+  }
+
+  // Refresh stats when timer finishes
+  LaunchedEffect(timerState.isFinished) {
+    if (timerState.isFinished) {
+      totalSessions = statsPrefs.getInt(TimerService.KEY_TOTAL_SESSIONS, 0)
+      totalMinutesSaved = statsPrefs.getLong(TimerService.KEY_TOTAL_MINUTES_SAVED, 0L)
+      lastTimestamp = statsPrefs.getLong(TimerService.KEY_LAST_TIMESTAMP, 0L)
+    }
+  }
+
+  // Custom Duration Dialog State
+  var showCustomDurationDialog by remember { mutableStateOf(false) }
 
   // Observe real-time system Wi-Fi state changes
   DisposableEffect(baseContext) {
@@ -185,6 +258,51 @@ fun WifiSleepTimerScreen() {
     }
   }
 
+  // Accelerometer Shake-to-Extend Listener (when timer is active & shakeEnabled)
+  DisposableEffect(timerState.isRunning, shakeEnabled) {
+    if (!timerState.isRunning || !shakeEnabled) {
+      return@DisposableEffect onDispose {}
+    }
+
+    val sensorManager = baseContext.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+    val accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    var lastShakeTimestamp = 0L
+
+    val listener =
+      object : SensorEventListener {
+        override fun onSensorChanged(event: SensorEvent?) {
+          event ?: return
+          val x = event.values[0]
+          val y = event.values[1]
+          val z = event.values[2]
+          val acceleration = sqrt((x * x + y * y + z * z).toDouble()) - SensorManager.GRAVITY_EARTH
+
+          if (acceleration > 13.0) {
+            val now = System.currentTimeMillis()
+            if (now - lastShakeTimestamp > 2500L) {
+              lastShakeTimestamp = now
+              addFiveMinutesToService(baseContext)
+              Toast.makeText(
+                baseContext,
+                str(R.string.shake_detected_toast),
+                Toast.LENGTH_SHORT,
+              ).show()
+            }
+          }
+        }
+
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+      }
+
+    if (accelerometer != null) {
+      sensorManager.registerListener(listener, accelerometer, SensorManager.SENSOR_DELAY_UI)
+    }
+
+    onDispose {
+      sensorManager?.unregisterListener(listener)
+    }
+  }
+
   // When the timer finishes (00:00), ensure Wi-Fi is turned off automatically and update UI state
   LaunchedEffect(timerState.isFinished) {
     if (timerState.isFinished) {
@@ -197,7 +315,6 @@ fun WifiSleepTimerScreen() {
     rememberLauncherForActivityResult(
       contract = ActivityResultContracts.RequestPermission(),
     ) { _ ->
-      // Start Foreground Service regardless of notification permission result
       startTimerForegroundService(baseContext, timerState.remainingMillis)
     }
 
@@ -242,6 +359,65 @@ fun WifiSleepTimerScreen() {
       modifier = Modifier.fillMaxSize(),
       containerColor = NightObsidian,
       contentWindowInsets = WindowInsets.safeDrawing,
+      bottomBar = {
+        NavigationBar(
+          containerColor = NightSurfaceElevated,
+          contentColor = TextPrimaryNight,
+          tonalElevation = 8.dp,
+        ) {
+          NavigationBarItem(
+            selected = selectedTab == MainTab.TIMER,
+            onClick = { selectedTab = MainTab.TIMER },
+            icon = {
+              Icon(
+                imageVector = Icons.Filled.Bedtime,
+                contentDescription = str(R.string.nav_timer),
+              )
+            },
+            label = {
+              Text(
+                text = str(R.string.nav_timer),
+                fontWeight = if (selectedTab == MainTab.TIMER) FontWeight.Bold else FontWeight.Normal,
+              )
+            },
+            colors =
+              NavigationBarItemDefaults.colors(
+                selectedIconColor = SleepAmberBright,
+                selectedTextColor = SleepAmberBright,
+                indicatorColor = SleepAmberDim,
+                unselectedIconColor = TextSecondaryNight,
+                unselectedTextColor = TextSecondaryNight,
+              ),
+            modifier = Modifier.testTag("nav_tab_timer"),
+          )
+
+          NavigationBarItem(
+            selected = selectedTab == MainTab.DATA_USAGE,
+            onClick = { selectedTab = MainTab.DATA_USAGE },
+            icon = {
+              Icon(
+                imageVector = Icons.Filled.DataUsage,
+                contentDescription = str(R.string.nav_data_usage),
+              )
+            },
+            label = {
+              Text(
+                text = str(R.string.nav_data_usage),
+                fontWeight = if (selectedTab == MainTab.DATA_USAGE) FontWeight.Bold else FontWeight.Normal,
+              )
+            },
+            colors =
+              NavigationBarItemDefaults.colors(
+                selectedIconColor = SleepAmberBright,
+                selectedTextColor = SleepAmberBright,
+                indicatorColor = SleepAmberDim,
+                unselectedIconColor = TextSecondaryNight,
+                unselectedTextColor = TextSecondaryNight,
+              ),
+            modifier = Modifier.testTag("nav_tab_data_usage"),
+          )
+        }
+      },
     ) { innerPadding ->
       Box(
         modifier =
@@ -254,15 +430,16 @@ fun WifiSleepTimerScreen() {
             .padding(innerPadding),
         contentAlignment = Alignment.TopCenter,
       ) {
-        Column(
-          modifier =
-            Modifier.fillMaxSize()
-              .widthIn(max = 500.dp)
-              .verticalScroll(rememberScrollState())
-              .padding(horizontal = 24.dp, vertical = 16.dp),
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.SpaceBetween,
-        ) {
+        when (selectedTab) {
+          MainTab.TIMER -> {
+            Column(
+              modifier =
+                Modifier.fillMaxSize()
+                  .widthIn(max = 500.dp)
+                  .verticalScroll(rememberScrollState())
+                  .padding(horizontal = 24.dp, vertical = 16.dp),
+              horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
           // Top Header & Live Wi-Fi Status Pill + Language Switch
           TopHeaderSection(
             isWifiEnabled = isWifiEnabled,
@@ -323,43 +500,77 @@ fun WifiSleepTimerScreen() {
                 color = TextSecondaryNight,
               )
 
-              // Quick 10s Test chip for verifying 00:00 cutoff immediately
-              Surface(
-                modifier =
-                  Modifier.minimumInteractiveComponentSize()
-                    .clip(RoundedCornerShape(50))
-                    .clickable(enabled = !timerState.isRunning) {
-                      TimerService.selectDuration(10_000L)
-                    }
-                    .testTag("preset_10s_button"),
-                shape = RoundedCornerShape(50),
-                color =
-                  if (!timerState.isRunning && timerState.totalDurationMillis == 10_000L) {
-                    SleepAmberDim
-                  } else {
-                    NightSurfaceElevated
-                  },
-                border =
-                  BorderStroke(
-                    1.dp,
-                    if (!timerState.isRunning && timerState.totalDurationMillis == 10_000L) {
-                      SleepAmber
-                    } else {
-                      NightOutline
-                    },
-                  ),
-              ) {
-                Text(
-                  text = str(R.string.preset_10_sec_test),
-                  style = MaterialTheme.typography.labelSmall,
+              Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Custom Duration Picker Button
+                Surface(
+                  modifier =
+                    Modifier.minimumInteractiveComponentSize()
+                      .clip(RoundedCornerShape(50))
+                      .clickable(enabled = !timerState.isRunning) {
+                        showCustomDurationDialog = true
+                      }
+                      .testTag("preset_custom_button"),
+                  shape = RoundedCornerShape(50),
+                  color = NightSurfaceElevated,
+                  border = BorderStroke(1.dp, NightOutline),
+                ) {
+                  Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                  ) {
+                    Icon(
+                      imageVector = Icons.Filled.HourglassTop,
+                      contentDescription = null,
+                      tint = SleepAmber,
+                      modifier = Modifier.size(14.dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                      text = str(R.string.button_custom_time),
+                      style = MaterialTheme.typography.labelSmall,
+                      color = SleepAmberBright,
+                    )
+                  }
+                }
+
+                // Quick 10s Test chip
+                Surface(
+                  modifier =
+                    Modifier.minimumInteractiveComponentSize()
+                      .clip(RoundedCornerShape(50))
+                      .clickable(enabled = !timerState.isRunning) {
+                        TimerService.selectDuration(10_000L)
+                      }
+                      .testTag("preset_10s_button"),
+                  shape = RoundedCornerShape(50),
                   color =
                     if (!timerState.isRunning && timerState.totalDurationMillis == 10_000L) {
-                      SleepAmberBright
+                      SleepAmberDim
                     } else {
-                      TextSecondaryNight
+                      NightSurfaceElevated
                     },
-                  modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                )
+                  border =
+                    BorderStroke(
+                      1.dp,
+                      if (!timerState.isRunning && timerState.totalDurationMillis == 10_000L) {
+                        SleepAmber
+                      } else {
+                        NightOutline
+                      },
+                    ),
+                ) {
+                  Text(
+                    text = str(R.string.preset_10_sec_test),
+                    style = MaterialTheme.typography.labelSmall,
+                    color =
+                      if (!timerState.isRunning && timerState.totalDurationMillis == 10_000L) {
+                        SleepAmberBright
+                      } else {
+                        TextSecondaryNight
+                      },
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                  )
+                }
               }
             }
 
@@ -384,7 +595,7 @@ fun WifiSleepTimerScreen() {
               }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Primary Confirm / Start or Active Timer Controls
             if (!timerState.isRunning) {
@@ -392,7 +603,7 @@ fun WifiSleepTimerScreen() {
                 onClick = onStartTimerClicked,
                 modifier =
                   Modifier.fillMaxWidth()
-                    .height(60.dp)
+                    .height(58.dp)
                     .testTag("confirm_start_button"),
                 shape = RoundedCornerShape(20.dp),
                 colors =
@@ -428,7 +639,7 @@ fun WifiSleepTimerScreen() {
                   onClick = { addFiveMinutesToService(baseContext) },
                   modifier =
                     Modifier.weight(0.4f)
-                      .height(60.dp)
+                      .height(58.dp)
                       .testTag("add_5m_button"),
                   shape = RoundedCornerShape(20.dp),
                   colors =
@@ -448,7 +659,7 @@ fun WifiSleepTimerScreen() {
                   onClick = { stopTimerForegroundService(baseContext) },
                   modifier =
                     Modifier.weight(0.6f)
-                      .height(60.dp)
+                      .height(58.dp)
                       .testTag("cancel_timer_button"),
                   shape = RoundedCornerShape(20.dp),
                   colors =
@@ -471,23 +682,377 @@ fun WifiSleepTimerScreen() {
                 }
               }
             }
+          }
 
-            Spacer(modifier = Modifier.height(12.dp))
+          Spacer(modifier = Modifier.height(24.dp))
 
+          // Sleep & Battery Savings Card with Toggles
+          SleepStatsAndFeaturesCard(
+            totalSessions = totalSessions,
+            totalMinutesSaved = totalMinutesSaved,
+            lastTimestamp = lastTimestamp,
+            vibrationEnabled = vibrationEnabled,
+            shakeEnabled = shakeEnabled,
+            str = str,
+            onVibrationToggle = { enabled ->
+              vibrationEnabled = enabled
+              settingsPrefs.edit().putBoolean(TimerService.KEY_VIBRATION_ENABLED, enabled).apply()
+            },
+            onShakeToggle = { enabled ->
+              shakeEnabled = enabled
+              settingsPrefs.edit().putBoolean(TimerService.KEY_SHAKE_ENABLED, enabled).apply()
+            },
+          )
+
+          Spacer(modifier = Modifier.height(16.dp))
+
+          Text(
+            text =
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                str(R.string.api_q_note)
+              } else {
+                str(R.string.api_legacy_note)
+              },
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextMutedNight,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+          )
+        }
+      }
+      MainTab.DATA_USAGE -> {
+        DataUsageScreen(
+          str = str,
+        )
+      }
+    }
+  }
+
+      // Custom Time Dialog
+      if (showCustomDurationDialog) {
+        CustomDurationDialog(
+          str = str,
+          onDismiss = { showCustomDurationDialog = false },
+          onConfirm = { durationMillis ->
+            TimerService.selectDuration(durationMillis)
+            showCustomDurationDialog = false
+          },
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun CustomDurationDialog(
+  str: (Int) -> String,
+  onDismiss: () -> Unit,
+  onConfirm: (Long) -> Unit,
+) {
+  var hours by remember { mutableIntStateOf(1) }
+  var minutes by remember { mutableIntStateOf(30) }
+
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    containerColor = NightSurfaceElevated,
+    title = {
+      Text(
+        text = str(R.string.custom_time_title),
+        style = MaterialTheme.typography.titleLarge,
+        color = TextPrimaryNight,
+      )
+    },
+    text = {
+      Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+      ) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceEvenly,
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          // Hours Picker Column
+          TimeCounterColumn(
+            label = str(R.string.custom_hours_label),
+            value = hours,
+            onDecrement = { if (hours > 0) hours-- },
+            onIncrement = { if (hours < 12) hours++ },
+          )
+
+          Text(
+            text = ":",
+            style = MaterialTheme.typography.displayMedium,
+            color = SleepAmberBright,
+            fontWeight = FontWeight.Bold,
+          )
+
+          // Minutes Picker Column
+          TimeCounterColumn(
+            label = str(R.string.custom_minutes_label),
+            value = minutes,
+            onDecrement = { if (minutes > 0) minutes = (minutes - 5).coerceAtLeast(0) },
+            onIncrement = { if (minutes < 55) minutes = (minutes + 5).coerceAtMost(55) },
+          )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Total calculated preview
+        val totalMillis = (hours * 3600L + minutes * 60L) * 1000L
+        Text(
+          text = String.format(Locale.US, "%02d:%02d:00", hours, minutes),
+          style = MaterialTheme.typography.titleMedium,
+          color = SleepAmber,
+          fontWeight = FontWeight.Bold,
+        )
+      }
+    },
+    confirmButton = {
+      Button(
+        onClick = {
+          val totalMillis = ((hours * 3600L + minutes * 60L) * 1000L).coerceAtLeast(60_000L)
+          onConfirm(totalMillis)
+        },
+        colors =
+          ButtonDefaults.buttonColors(
+            containerColor = SleepAmber,
+            contentColor = NightObsidian,
+          ),
+      ) {
+        Text(
+          text = str(R.string.custom_set_button),
+          fontWeight = FontWeight.Bold,
+        )
+      }
+    },
+    dismissButton = {
+      TextButton(onClick = onDismiss) {
+        Text(
+          text = str(R.string.custom_cancel_button),
+          color = TextSecondaryNight,
+        )
+      }
+    },
+  )
+}
+
+@Composable
+private fun TimeCounterColumn(
+  label: String,
+  value: Int,
+  onDecrement: () -> Unit,
+  onIncrement: () -> Unit,
+) {
+  Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelMedium,
+      color = TextSecondaryNight,
+    )
+    Spacer(modifier = Modifier.height(6.dp))
+    FilledTonalIconButton(
+      onClick = onIncrement,
+      modifier = Modifier.size(40.dp),
+      colors =
+        IconButtonDefaults.filledTonalIconButtonColors(
+          containerColor = NightSurface,
+          contentColor = SleepAmberBright,
+        ),
+    ) {
+      Icon(Icons.Filled.Add, contentDescription = null)
+    }
+    Text(
+      text = String.format(Locale.US, "%02d", value),
+      style = MaterialTheme.typography.headlineMedium,
+      color = TextPrimaryNight,
+      fontWeight = FontWeight.Bold,
+      modifier = Modifier.padding(vertical = 4.dp),
+    )
+    FilledTonalIconButton(
+      onClick = onDecrement,
+      modifier = Modifier.size(40.dp),
+      colors =
+        IconButtonDefaults.filledTonalIconButtonColors(
+          containerColor = NightSurface,
+          contentColor = SleepAmberBright,
+        ),
+    ) {
+      Icon(Icons.Filled.Remove, contentDescription = null)
+    }
+  }
+}
+
+@Composable
+private fun SleepStatsAndFeaturesCard(
+  totalSessions: Int,
+  totalMinutesSaved: Long,
+  lastTimestamp: Long,
+  vibrationEnabled: Boolean,
+  shakeEnabled: Boolean,
+  str: (Int) -> String,
+  onVibrationToggle: (Boolean) -> Unit,
+  onShakeToggle: (Boolean) -> Unit,
+) {
+  Card(
+    modifier = Modifier.fillMaxWidth(),
+    shape = RoundedCornerShape(20.dp),
+    colors = CardDefaults.cardColors(containerColor = NightSurfaceElevated),
+    border = BorderStroke(1.dp, NightOutline),
+  ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
+        Icon(
+          imageVector = Icons.Filled.BatteryChargingFull,
+          contentDescription = null,
+          tint = SleepAmber,
+          modifier = Modifier.size(20.dp),
+        )
+        Text(
+          text = str(R.string.stats_title),
+          style = MaterialTheme.typography.titleMedium,
+          color = TextPrimaryNight,
+          fontWeight = FontWeight.Bold,
+        )
+      }
+
+      Spacer(modifier = Modifier.height(14.dp))
+
+      // Stats Badges Row
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+      ) {
+        // Sessions Badge
+        Surface(
+          modifier = Modifier.weight(1f),
+          shape = RoundedCornerShape(14.dp),
+          color = NightSurface,
+          border = BorderStroke(1.dp, NightOutline),
+        ) {
+          Column(modifier = Modifier.padding(10.dp)) {
             Text(
-              text =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                  str(R.string.api_q_note)
-                } else {
-                  str(R.string.api_legacy_note)
-                },
-              style = MaterialTheme.typography.bodyMedium,
-              color = TextMutedNight,
-              textAlign = TextAlign.Center,
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+              text = str(R.string.stats_sessions_label),
+              style = MaterialTheme.typography.labelSmall,
+              color = TextSecondaryNight,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+              text = "$totalSessions",
+              style = MaterialTheme.typography.titleLarge,
+              color = SleepAmberBright,
+              fontWeight = FontWeight.Bold,
             )
           }
         }
+
+        // Est Battery Saved Badge
+        val hoursSaved = (totalMinutesSaved / 60.0)
+        val formattedHours = String.format(Locale.US, "%.1fh", hoursSaved)
+        Surface(
+          modifier = Modifier.weight(1f),
+          shape = RoundedCornerShape(14.dp),
+          color = NightSurface,
+          border = BorderStroke(1.dp, NightOutline),
+        ) {
+          Column(modifier = Modifier.padding(10.dp)) {
+            Text(
+              text = str(R.string.stats_battery_saved),
+              style = MaterialTheme.typography.labelSmall,
+              color = TextSecondaryNight,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+              text = formattedHours,
+              style = MaterialTheme.typography.titleLarge,
+              color = WifiActiveGreen,
+              fontWeight = FontWeight.Bold,
+            )
+          }
+        }
+      }
+
+      // Last Shutdown Time
+      if (lastTimestamp > 0L) {
+        Spacer(modifier = Modifier.height(8.dp))
+        val dateStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(lastTimestamp))
+        Text(
+          text = "${str(R.string.stats_last_time)}: $dateStr",
+          style = MaterialTheme.typography.bodySmall,
+          color = TextMutedNight,
+        )
+      }
+
+      Spacer(modifier = Modifier.height(14.dp))
+
+      // Toggles
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          modifier = Modifier.weight(1f),
+        ) {
+          Icon(
+            imageVector = Icons.Filled.Vibration,
+            contentDescription = null,
+            tint = TextSecondaryNight,
+            modifier = Modifier.size(18.dp),
+          )
+          Text(
+            text = str(R.string.feature_vibrate_label),
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextPrimaryNight,
+          )
+        }
+        Switch(
+          checked = vibrationEnabled,
+          onCheckedChange = onVibrationToggle,
+          colors =
+            SwitchDefaults.colors(
+              checkedThumbColor = SleepAmber,
+              checkedTrackColor = SleepAmberDim,
+            ),
+        )
+      }
+
+      Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          modifier = Modifier.weight(1f),
+        ) {
+          Icon(
+            imageVector = Icons.Filled.ScreenRotation,
+            contentDescription = null,
+            tint = TextSecondaryNight,
+            modifier = Modifier.size(18.dp),
+          )
+          Text(
+            text = str(R.string.feature_shake_label),
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextPrimaryNight,
+          )
+        }
+        Switch(
+          checked = shakeEnabled,
+          onCheckedChange = onShakeToggle,
+          colors =
+            SwitchDefaults.colors(
+              checkedThumbColor = SleepAmber,
+              checkedTrackColor = SleepAmberDim,
+            ),
+        )
       }
     }
   }
@@ -924,7 +1489,7 @@ private fun PresetDurationButton(
   OutlinedButton(
     onClick = onClick,
     enabled = enabled,
-    modifier = modifier.height(50.dp),
+    modifier = modifier.height(48.dp),
     shape = RoundedCornerShape(14.dp),
     border = BorderStroke(if (isSelected) 1.5.dp else 1.dp, borderColor),
     colors =
@@ -934,11 +1499,11 @@ private fun PresetDurationButton(
         disabledContainerColor = NightSurface.copy(alpha = 0.5f),
         disabledContentColor = TextMutedNight,
       ),
-    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
   ) {
     Text(
       text = label,
-      style = MaterialTheme.typography.labelLarge,
+      style = MaterialTheme.typography.labelMedium,
       fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
     )
   }

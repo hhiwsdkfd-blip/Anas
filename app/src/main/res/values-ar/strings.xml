@@ -15,6 +15,20 @@
     <string name="preset_45_min">45 دقيقة</string>
     <string name="preset_60_min">60 دقيقة</string>
     <string name="preset_10_sec_test">تجربة 10 ث</string>
+    <string name="button_custom_time">وقت مخصص</string>
+    <string name="custom_time_title">تحديد وقت نوم مخصص</string>
+    <string name="custom_hours_label">ساعات</string>
+    <string name="custom_minutes_label">دقائق</string>
+    <string name="custom_set_button">تطبيق المدة</string>
+    <string name="custom_cancel_button">إلغاء</string>
+    <string name="stats_title">إحصائيات النوم وتوفير الطاقة</string>
+    <string name="stats_sessions_label">جلسات نوم مكتملة</string>
+    <string name="stats_battery_saved">تقدير الطاقة الموفرة</string>
+    <string name="stats_last_time">آخر إيقاف تلقائي</string>
+    <string name="stats_no_history">لا توجد بعد</string>
+    <string name="feature_vibrate_label">اهتزاز لطيف عند الانتهاء</string>
+    <string name="feature_shake_label">هز الهاتف لإضافة +5 دقائق</string>
+    <string name="shake_detected_toast">تمت إضافة +5 دقائق بالهز!</string>
     <string name="button_confirm_start">تأكيد / بدء المؤقت</string>
     <string name="button_cancel_timer">إلغاء المؤقت</string>
     <string name="button_add_5_min">+5 د</string>
@@ -35,4 +49,41 @@
     <string name="notification_action_wifi_panel">إعدادات الواي فاي</string>
     <string name="api_q_note">سيتم إيقاف الواي فاي تلقائياً بالكامل فور وصول المؤقت إلى 00:00.</string>
     <string name="api_legacy_note">سيتم إيقاف الواي فاي تلقائياً بالكامل فور وصول المؤقت إلى 00:00.</string>
+
+    <!-- Navigation -->
+    <string name="nav_timer">مؤقت النوم</string>
+    <string name="nav_data_usage">استهلاك البيانات</string>
+
+    <!-- Data Usage Feature -->
+    <string name="data_usage_title">استهلاك البيانات والإنترنت</string>
+    <string name="data_usage_subtitle">متابعة استهلاك الواي فاي وبيانات الشريحة لكل تطبيق</string>
+    <string name="data_wifi_card_title">استهلاك الواي فاي</string>
+    <string name="data_mobile_card_title">بيانات الشريحة</string>
+    <string name="data_total_label">الإجمالي المستهلك</string>
+    <string name="data_period_today">اليوم</string>
+    <string name="data_period_week">آخر 7 أيام</string>
+    <string name="data_period_month">هذا الشهر</string>
+    <string name="data_apps_heading">تفاصيل استهلاك التطبيقات</string>
+    <string name="data_permission_title">صلاحية الوصول مطلوبة</string>
+    <string name="data_permission_desc">لحساب استهلاك الإنترنت لكل تطبيق بدقة من الواي فاي وبيانات الشريحة، يتطلب نظام أندرويد تفعيل إذن "الوصول إلى بيانات الاستخدام".</string>
+    <string name="data_permission_button">تفعيل إذن الاستخدام</string>
+    <string name="data_refresh_button">تحديث البيانات</string>
+    <string name="data_no_apps_found">لا يوجد استهلاك إنترنت مسجل لهذه الفترة</string>
+    <string name="data_rx_label">تنزيل</string>
+    <string name="data_tx_label">رفع</string>
+    <string name="data_wifi_only">واي فاي</string>
+    <string name="data_mobile_only">شريحة</string>
+
+    <!-- App Search & Sort & Details -->
+    <string name="search_apps_placeholder">ابحث عن تطبيق…</string>
+    <string name="sort_by_highest">الكل</string>
+    <string name="sort_by_wifi">واي فاي</string>
+    <string name="sort_by_mobile">شريحة</string>
+    <string name="app_details_title">تفاصيل استهلاك التطبيق</string>
+    <string name="button_open_app_info">إدارة التطبيق في الإعدادات</string>
+    <string name="percent_of_total">من إجمالي استهلاك الهاتف</string>
+    <string name="download_label">تنزيل</string>
+    <string name="upload_label">رفع</string>
+    <string name="total_label">المجموع</string>
+    <string name="close_button">إغلاق</string>
 </resources>

@@ -119,6 +119,9 @@ class TimerService : Service() {
     countDownTimer = null
 
     val disabledDirectly = disableWifiAutomatically(applicationContext)
+    recordSleepSession(applicationContext, _timerState.value.totalDurationMillis)
+    triggerGentleVibration(applicationContext)
+
     _timerState.update { state ->
       state.copy(
         remainingMillis = 0L,
@@ -293,6 +296,46 @@ class TimerService : Service() {
     manager.notify(NOTIFICATION_ID_FINISHED, builder.build())
   }
 
+  private fun recordSleepSession(context: Context, durationMillis: Long) {
+    try {
+      val prefs = context.getSharedPreferences(PREFS_STATS, Context.MODE_PRIVATE)
+      val currentSessions = prefs.getInt(KEY_TOTAL_SESSIONS, 0)
+      val currentMinutes = prefs.getLong(KEY_TOTAL_MINUTES_SAVED, 0L)
+      val minutes = (durationMillis / 60_000L).coerceAtLeast(1L)
+      prefs.edit()
+        .putInt(KEY_TOTAL_SESSIONS, currentSessions + 1)
+        .putLong(KEY_TOTAL_MINUTES_SAVED, currentMinutes + minutes)
+        .putLong(KEY_LAST_TIMESTAMP, System.currentTimeMillis())
+        .apply()
+    } catch (_: Exception) {}
+  }
+
+  private fun triggerGentleVibration(context: Context) {
+    try {
+      val prefs = context.getSharedPreferences(PREFS_SETTINGS, Context.MODE_PRIVATE)
+      val vibrationEnabled = prefs.getBoolean(KEY_VIBRATION_ENABLED, true)
+      if (!vibrationEnabled) return
+
+      val vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+          val manager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? android.os.VibratorManager
+          manager?.defaultVibrator
+        } else {
+          @Suppress("DEPRECATION")
+          context.getSystemService(Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+        }
+      if (vibrator?.hasVibrator() == true) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          val effect = android.os.VibrationEffect.createWaveform(longArrayOf(0, 150, 100, 250), -1)
+          vibrator.vibrate(effect)
+        } else {
+          @Suppress("DEPRECATION")
+          vibrator.vibrate(250)
+        }
+      }
+    } catch (_: Exception) {}
+  }
+
   override fun onDestroy() {
     countDownTimer?.cancel()
     countDownTimer = null
@@ -311,7 +354,15 @@ class TimerService : Service() {
     const val DEFAULT_DURATION_MILLIS = 15 * 60 * 1000L
     const val FIVE_MINUTES_MILLIS = 5 * 60 * 1000L
     const val ONE_MINUTE_MILLIS = 60 * 1000L
-    const val MAX_DURATION_MILLIS = 180 * 60 * 1000L
+    const val MAX_DURATION_MILLIS = 720 * 60 * 1000L // Up to 12 hours for custom sleep
+
+    const val PREFS_STATS = "wifi_sleep_stats"
+    const val PREFS_SETTINGS = "wifi_sleep_settings"
+    const val KEY_TOTAL_SESSIONS = "total_sessions"
+    const val KEY_TOTAL_MINUTES_SAVED = "total_minutes_saved"
+    const val KEY_LAST_TIMESTAMP = "last_timestamp"
+    const val KEY_VIBRATION_ENABLED = "vibration_enabled"
+    const val KEY_SHAKE_ENABLED = "shake_enabled"
 
     private const val CHANNEL_ID_TIMER = "wifi_sleep_timer_channel"
     private const val CHANNEL_ID_FINISHED = "wifi_sleep_timer_finished_channel"

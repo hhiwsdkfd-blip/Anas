@@ -15,6 +15,20 @@
     <string name="preset_45_min">45 min</string>
     <string name="preset_60_min">60 min</string>
     <string name="preset_10_sec_test">10s Test</string>
+    <string name="button_custom_time">Custom</string>
+    <string name="custom_time_title">Set Custom Duration</string>
+    <string name="custom_hours_label">Hours</string>
+    <string name="custom_minutes_label">Minutes</string>
+    <string name="custom_set_button">Apply Duration</string>
+    <string name="custom_cancel_button">Cancel</string>
+    <string name="stats_title">Sleep &amp; Battery Savings</string>
+    <string name="stats_sessions_label">Completed Sessions</string>
+    <string name="stats_battery_saved">Est. Battery Saved</string>
+    <string name="stats_last_time">Last Auto-Shutoff</string>
+    <string name="stats_no_history">None yet</string>
+    <string name="feature_vibrate_label">Vibrate on Complete</string>
+    <string name="feature_shake_label">Shake to add +5 min</string>
+    <string name="shake_detected_toast">Added +5 minutes!</string>
     <string name="button_confirm_start">Confirm / Start</string>
     <string name="button_cancel_timer">Cancel Timer</string>
     <string name="button_add_5_min">+5 min</string>
@@ -35,4 +49,41 @@
     <string name="notification_action_wifi_panel">Wi-Fi Settings</string>
     <string name="api_q_note">Wi-Fi will turn off automatically as soon as the timer reaches 00:00.</string>
     <string name="api_legacy_note">Wi-Fi will turn off automatically as soon as the timer reaches 00:00.</string>
+
+    <!-- Navigation -->
+    <string name="nav_timer">Timer</string>
+    <string name="nav_data_usage">Data Usage</string>
+
+    <!-- Data Usage Feature -->
+    <string name="data_usage_title">Data Consumption</string>
+    <string name="data_usage_subtitle">Track Wi-Fi and Mobile Data used by each app</string>
+    <string name="data_wifi_card_title">Wi-Fi Data</string>
+    <string name="data_mobile_card_title">Mobile Data</string>
+    <string name="data_total_label">Total Used</string>
+    <string name="data_period_today">Today</string>
+    <string name="data_period_week">7 Days</string>
+    <string name="data_period_month">This Month</string>
+    <string name="data_apps_heading">App Consumption Breakdown</string>
+    <string name="data_permission_title">Usage Access Needed</string>
+    <string name="data_permission_desc">To calculate how much Wi-Fi and Mobile data each app consumed, Android requires the "Usage Access" permission.</string>
+    <string name="data_permission_button">Grant Usage Permission</string>
+    <string name="data_refresh_button">Refresh Stats</string>
+    <string name="data_no_apps_found">No app usage detected for this period</string>
+    <string name="data_rx_label">Down</string>
+    <string name="data_tx_label">Up</string>
+    <string name="data_wifi_only">Wi-Fi</string>
+    <string name="data_mobile_only">Mobile</string>
+
+    <!-- App Search & Sort & Details -->
+    <string name="search_apps_placeholder">Search app name…</string>
+    <string name="sort_by_highest">All</string>
+    <string name="sort_by_wifi">Wi-Fi</string>
+    <string name="sort_by_mobile">Mobile</string>
+    <string name="app_details_title">App Internet Details</string>
+    <string name="button_open_app_info">Open App Info</string>
+    <string name="percent_of_total">% of total traffic</string>
+    <string name="download_label">Download</string>
+    <string name="upload_label">Upload</string>
+    <string name="total_label">Total</string>
+    <string name="close_button">Close</string>
 </resources>
