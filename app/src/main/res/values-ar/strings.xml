@@ -53,6 +53,9 @@
     <!-- Navigation -->
     <string name="nav_timer">مؤقت النوم</string>
     <string name="nav_data_usage">استهلاك البيانات</string>
+    <string name="nav_developer">المطور</string>
+    <string name="developer_screen_title">صفحة المطور</string>
+    <string name="developer_screen_subtitle">الملف التعريفي وقنوات التواصل الرسمية</string>
 
     <!-- Data Usage Feature -->
     <string name="data_usage_title">استهلاك البيانات والإنترنت</string>
@@ -86,4 +89,29 @@
     <string name="upload_label">رفع</string>
     <string name="total_label">المجموع</string>
     <string name="close_button">إغلاق</string>
+
+    <!-- About & Developer Info -->
+    <string name="about_app_title">عن التطبيق والمطور</string>
+    <string name="developer_heading">ملف المطور الرسمي</string>
+    <string name="developer_name">أنس علي عايض القاضي</string>
+    <string name="developer_title">مهندس ومطور التطبيق</string>
+    <string name="developer_email_val">hhiwsdkfd@gmail.com</string>
+    <string name="developer_phone_val">783026336 (967+)</string>
+    <string name="developer_phone_raw">+967783026336</string>
+    <string name="developer_whatsapp_button">واتساب</string>
+    <string name="developer_call_button">اتصال</string>
+    <string name="developer_contact_button">البريد</string>
+    <string name="developer_verified_badge">مطور معتمد</string>
+    <string name="developer_bio">تم تصميم وهندسة هذا التطبيق باحترافية تامة لتوفير طاقة البطارية وضمان النوم الهادئ مع التحكم الكامل باستهلاك بيانات الإنترنت.</string>
+    <string name="app_version_val">الإصدار 1.2 (Build 3)</string>
+    <string name="privacy_guarantee_title">ضمان الأمان والخصوصية 100%</string>
+    <string name="privacy_guarantee_desc">جميع عمليات العد التنازلي وإحصائيات توفير البطارية وحساب استهلاك الإنترنت تعمل محلياً بالكامل على هاتفك دون مشاركة أي بيانات شخصية مع أي جهة خارجية.</string>
+    <string name="share_app_button">مشاركة التطبيق</string>
+    <string name="share_app_subject">مؤقت نوم الواي فاي ومراقب البيانات</string>
+    <string name="share_app_text">جرّب تطبيق مؤقت نوم الواي فاي ومراقب البيانات للمطور أنس علي عايض القاضي — تطبيق رائع لتوفير بطارية هاتفك ومتابعة استهلاك الإنترنت لكل تطبيق!</string>
+    <string name="core_features_title">أبرز قدرات التطبيق</string>
+    <string name="feature_1_desc">مؤقت نوم ذكي: إيقاف تلقائي فوري لاتصال الواي فاي عند 00:00</string>
+    <string name="feature_2_desc">مراقب استهلاك البيانات: تفصيل استخدام الواي فاي وبيانات الشريحة لكل تطبيق</string>
+    <string name="feature_3_desc">تمديد بهز الهاتف: إضافة +5 دقائق بمجرد هز الهاتف في السرير</string>
+    <string name="feature_4_desc">اهتزاز تنبيهي لطيف: نبضات اهتزاز هادئة تنبهك عند إيقاف الواي فاي</string>
 </resources>

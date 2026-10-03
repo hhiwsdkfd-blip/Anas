@@ -53,6 +53,9 @@
     <!-- Navigation -->
     <string name="nav_timer">Timer</string>
     <string name="nav_data_usage">Data Usage</string>
+    <string name="nav_developer">Developer</string>
+    <string name="developer_screen_title">Developer Profile</string>
+    <string name="developer_screen_subtitle">Official creator &amp; contact channels</string>
 
     <!-- Data Usage Feature -->
     <string name="data_usage_title">Data Consumption</string>
@@ -86,4 +89,29 @@
     <string name="upload_label">Upload</string>
     <string name="total_label">Total</string>
     <string name="close_button">Close</string>
+
+    <!-- About & Developer Info -->
+    <string name="about_app_title">About &amp; Developer</string>
+    <string name="developer_heading">Developer Profile</string>
+    <string name="developer_name">Anas Ali Ayedh Al-Qadhi</string>
+    <string name="developer_title">Lead Android Developer</string>
+    <string name="developer_email_val">hhiwsdkfd@gmail.com</string>
+    <string name="developer_phone_val">+967 783 026 336</string>
+    <string name="developer_phone_raw">+967783026336</string>
+    <string name="developer_whatsapp_button">WhatsApp</string>
+    <string name="developer_call_button">Call Phone</string>
+    <string name="developer_contact_button">Email</string>
+    <string name="developer_verified_badge">Verified Creator</string>
+    <string name="developer_bio">Developed and engineered with precision to provide seamless sleep Wi-Fi shutoff, battery preservation, and transparent internet tracking.</string>
+    <string name="app_version_val">Version 1.2 (Build 3)</string>
+    <string name="privacy_guarantee_title">100% Privacy &amp; Offline Guarantee</string>
+    <string name="privacy_guarantee_desc">All Wi-Fi countdowns, battery statistics, and data usage calculations run strictly locally on your device. No analytics, tracking, or personal data ever leaves your phone.</string>
+    <string name="share_app_button">Share App</string>
+    <string name="share_app_subject">Wi-Fi Sleep Timer &amp; Data Monitor</string>
+    <string name="share_app_text">Check out Wi-Fi Sleep Timer &amp; Data Usage Monitor by Anas Ali Ayedh Al-Qadhi — save battery and sleep better while keeping track of your internet usage!</string>
+    <string name="core_features_title">Key Features</string>
+    <string name="feature_1_desc">Smart Sleep Countdown: Automatically turns off Wi-Fi at 00:00</string>
+    <string name="feature_2_desc">Per-App Data Tracker: Wi-Fi vs Mobile usage breakdown</string>
+    <string name="feature_3_desc">Shake to Extend: Add +5 minutes by gently shaking phone in bed</string>
+    <string name="feature_4_desc">Gentle Tactile Feedback: Soft pulse vibration when timer completes</string>
 </resources>

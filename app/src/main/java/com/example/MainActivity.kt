@@ -60,7 +60,9 @@ import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DataUsage
 import androidx.compose.material.icons.filled.HourglassTop
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
@@ -150,7 +152,8 @@ data class TimerPreset(
 
 enum class MainTab {
   TIMER,
-  DATA_USAGE
+  DATA_USAGE,
+  DEVELOPER
 }
 
 class MainActivity : ComponentActivity() {
@@ -231,6 +234,7 @@ fun WifiSleepTimerScreen() {
 
   // Custom Duration Dialog State
   var showCustomDurationDialog by remember { mutableStateOf(false) }
+  var showAboutDeveloperDialog by remember { mutableStateOf(false) }
 
   // Observe real-time system Wi-Fi state changes
   DisposableEffect(baseContext) {
@@ -416,6 +420,32 @@ fun WifiSleepTimerScreen() {
               ),
             modifier = Modifier.testTag("nav_tab_data_usage"),
           )
+
+          NavigationBarItem(
+            selected = selectedTab == MainTab.DEVELOPER,
+            onClick = { selectedTab = MainTab.DEVELOPER },
+            icon = {
+              Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = str(R.string.nav_developer),
+              )
+            },
+            label = {
+              Text(
+                text = str(R.string.nav_developer),
+                fontWeight = if (selectedTab == MainTab.DEVELOPER) FontWeight.Bold else FontWeight.Normal,
+              )
+            },
+            colors =
+              NavigationBarItemDefaults.colors(
+                selectedIconColor = SleepAmberBright,
+                selectedTextColor = SleepAmberBright,
+                indicatorColor = SleepAmberDim,
+                unselectedIconColor = TextSecondaryNight,
+                unselectedTextColor = TextSecondaryNight,
+              ),
+            modifier = Modifier.testTag("nav_tab_developer"),
+          )
         }
       },
     ) { innerPadding ->
@@ -447,6 +477,7 @@ fun WifiSleepTimerScreen() {
             str = str,
             onToggleLanguage = { isArabic = !isArabic },
             onWifiPillClick = { openSystemWifiPanel(baseContext) },
+            onOpenAboutClick = { selectedTab = MainTab.DEVELOPER },
           )
 
           Spacer(modifier = Modifier.height(16.dp))
@@ -721,8 +752,16 @@ fun WifiSleepTimerScreen() {
         }
       }
       MainTab.DATA_USAGE -> {
+        BackHandler { selectedTab = MainTab.TIMER }
         DataUsageScreen(
           str = str,
+          onOpenAboutClick = { selectedTab = MainTab.DEVELOPER },
+        )
+      }
+      MainTab.DEVELOPER -> {
+        DeveloperScreen(
+          str = str,
+          onNavigateBack = { selectedTab = MainTab.TIMER },
         )
       }
     }
@@ -737,6 +776,14 @@ fun WifiSleepTimerScreen() {
             TimerService.selectDuration(durationMillis)
             showCustomDurationDialog = false
           },
+        )
+      }
+
+      // About & Developer Profile Dialog
+      if (showAboutDeveloperDialog) {
+        AboutDeveloperDialog(
+          str = str,
+          onDismiss = { showAboutDeveloperDialog = false },
         )
       }
     }
@@ -1065,6 +1112,7 @@ private fun TopHeaderSection(
   str: (Int) -> String,
   onToggleLanguage: () -> Unit,
   onWifiPillClick: () -> Unit,
+  onOpenAboutClick: () -> Unit,
 ) {
   Column(
     modifier = Modifier.fillMaxWidth(),
@@ -1108,33 +1156,62 @@ private fun TopHeaderSection(
         }
       }
 
-      // Language Switch Pill (عربي / EN)
-      Surface(
-        modifier =
-          Modifier.minimumInteractiveComponentSize()
-            .clip(RoundedCornerShape(50))
-            .clickable(onClick = onToggleLanguage)
-            .testTag("language_toggle_button"),
-        shape = RoundedCornerShape(50),
-        color = NightSurfaceElevated,
-        border = BorderStroke(1.dp, NightOutline),
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
       ) {
-        Row(
-          modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-          verticalAlignment = Alignment.CenterVertically,
+        // About / Developer Info Pill
+        Surface(
+          modifier =
+            Modifier.minimumInteractiveComponentSize()
+              .clip(RoundedCornerShape(50))
+              .clickable(onClick = onOpenAboutClick)
+              .testTag("about_developer_button"),
+          shape = RoundedCornerShape(50),
+          color = NightSurfaceElevated,
+          border = BorderStroke(1.dp, NightOutline),
         ) {
-          Icon(
-            imageVector = Icons.Filled.Language,
-            contentDescription = "Switch Language",
-            tint = SleepAmber,
-            modifier = Modifier.size(15.dp),
-          )
-          Spacer(modifier = Modifier.width(5.dp))
-          Text(
-            text = if (isArabic) "EN" else "عربي",
-            style = MaterialTheme.typography.labelLarge,
-            color = TextPrimaryNight,
-          )
+          Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Icon(
+              imageVector = Icons.Filled.Info,
+              contentDescription = "About Developer",
+              tint = SleepAmber,
+              modifier = Modifier.size(16.dp),
+            )
+          }
+        }
+
+        // Language Switch Pill (عربي / EN)
+        Surface(
+          modifier =
+            Modifier.minimumInteractiveComponentSize()
+              .clip(RoundedCornerShape(50))
+              .clickable(onClick = onToggleLanguage)
+              .testTag("language_toggle_button"),
+          shape = RoundedCornerShape(50),
+          color = NightSurfaceElevated,
+          border = BorderStroke(1.dp, NightOutline),
+        ) {
+          Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Icon(
+              imageVector = Icons.Filled.Language,
+              contentDescription = "Switch Language",
+              tint = SleepAmber,
+              modifier = Modifier.size(15.dp),
+            )
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(
+              text = if (isArabic) "EN" else "عربي",
+              style = MaterialTheme.typography.labelLarge,
+              color = TextPrimaryNight,
+            )
+          }
         }
       }
     }

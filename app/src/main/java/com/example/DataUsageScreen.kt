@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
@@ -101,6 +102,7 @@ enum class AppSortOption {
 @Composable
 fun DataUsageScreen(
   str: (Int) -> String,
+  onOpenAboutClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val context = LocalContext.current
@@ -189,23 +191,39 @@ fun DataUsageScreen(
             )
           }
 
-          IconButton(
-            onClick = loadStats,
-            enabled = !isLoading,
-            modifier = Modifier.testTag("refresh_data_usage_button"),
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
           ) {
-            if (isLoading) {
-              CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = SleepAmber,
-                strokeWidth = 2.dp,
-              )
-            } else {
+            IconButton(
+              onClick = onOpenAboutClick,
+              modifier = Modifier.testTag("about_button_data_screen"),
+            ) {
               Icon(
-                imageVector = Icons.Filled.Refresh,
-                contentDescription = str(R.string.data_refresh_button),
+                imageVector = Icons.Filled.Info,
+                contentDescription = str(R.string.about_app_title),
                 tint = SleepAmber,
               )
+            }
+
+            IconButton(
+              onClick = loadStats,
+              enabled = !isLoading,
+              modifier = Modifier.testTag("refresh_data_usage_button"),
+            ) {
+              if (isLoading) {
+                CircularProgressIndicator(
+                  modifier = Modifier.size(20.dp),
+                  color = SleepAmber,
+                  strokeWidth = 2.dp,
+                )
+              } else {
+                Icon(
+                  imageVector = Icons.Filled.Refresh,
+                  contentDescription = str(R.string.data_refresh_button),
+                  tint = SleepAmber,
+                )
+              }
             }
           }
         }
