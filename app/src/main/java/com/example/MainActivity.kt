@@ -5,8 +5,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.PixelFormat
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -55,12 +57,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DataUsage
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
@@ -70,6 +76,9 @@ import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiOff
@@ -80,6 +89,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -152,6 +162,7 @@ import kotlin.math.sqrt
 
 data class TimerPreset(
   val labelRes: Int,
+  val shortLabelRes: Int = labelRes,
   val durationMillis: Long,
   val testTag: String,
 )
@@ -159,12 +170,19 @@ data class TimerPreset(
 enum class MainTab {
   TIMER,
   DATA_USAGE,
-  DEVELOPER
+  SETUP,
+  DIAGNOSTICS,
+  DEVELOPER,
+  SETTINGS
 }
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    window.setFormat(PixelFormat.RGBA_8888)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      window.colorMode = ActivityInfo.COLOR_MODE_DEFAULT
+    }
     enableEdgeToEdge()
     setContent {
       MyApplicationTheme {
@@ -228,13 +246,18 @@ fun WifiSleepTimerScreen() {
   var lastTimestamp by remember {
     mutableLongStateOf(statsPrefs.getLong(TimerService.KEY_LAST_TIMESTAMP, 0L))
   }
+  var shutoffHistory by remember {
+    mutableStateOf(TimerService.getShutoffHistory(baseContext))
+  }
+  var showHistoryOverlay by remember { mutableStateOf(false) }
 
-  // Refresh stats when timer finishes
+  // Refresh stats and history when timer finishes
   LaunchedEffect(timerState.isFinished) {
     if (timerState.isFinished) {
       totalSessions = statsPrefs.getInt(TimerService.KEY_TOTAL_SESSIONS, 0)
       totalMinutesSaved = statsPrefs.getLong(TimerService.KEY_TOTAL_MINUTES_SAVED, 0L)
       lastTimestamp = statsPrefs.getLong(TimerService.KEY_LAST_TIMESTAMP, 0L)
+      shutoffHistory = TimerService.getShutoffHistory(baseContext)
     }
   }
 
@@ -252,6 +275,7 @@ fun WifiSleepTimerScreen() {
       LifecycleEventObserver { _, event ->
         if (event == Lifecycle.Event.ON_RESUME) {
           isAutoOffEnabled = WifiAutomationService.isAccessibilityPermissionGranted(baseContext)
+          shutoffHistory = TimerService.getShutoffHistory(baseContext)
         }
       }
     lifecycleOwner.lifecycle.addObserver(observer)
@@ -368,15 +392,22 @@ fun WifiSleepTimerScreen() {
     }
   }
 
-  val presets =
+  val primaryPresets =
     remember {
       listOf(
-        TimerPreset(R.string.preset_5_min, 5 * 60 * 1000L, "preset_5m_button"),
-        TimerPreset(R.string.preset_10_min, 10 * 60 * 1000L, "preset_10m_button"),
-        TimerPreset(R.string.preset_15_min, 15 * 60 * 1000L, "preset_15m_button"),
-        TimerPreset(R.string.preset_30_min, 30 * 60 * 1000L, "preset_30m_button"),
-        TimerPreset(R.string.preset_45_min, 45 * 60 * 1000L, "preset_45m_button"),
-        TimerPreset(R.string.preset_60_min, 60 * 60 * 1000L, "preset_60m_button"),
+        TimerPreset(R.string.preset_15_min, R.string.preset_15m_short, 15 * 60 * 1000L, "preset_15m_button"),
+        TimerPreset(R.string.preset_30_min, R.string.preset_30m_short, 30 * 60 * 1000L, "preset_30m_button"),
+        TimerPreset(R.string.preset_45_min, R.string.preset_45m_short, 45 * 60 * 1000L, "preset_45m_button"),
+        TimerPreset(R.string.preset_60_min, R.string.preset_60m_short, 60 * 60 * 1000L, "preset_60m_button"),
+      )
+    }
+
+  val secondaryPresets =
+    remember {
+      listOf(
+        TimerPreset(R.string.preset_5_min, R.string.preset_5_min, 5 * 60 * 1000L, "preset_5m_button"),
+        TimerPreset(R.string.preset_10_min, R.string.preset_10_min, 10 * 60 * 1000L, "preset_10m_button"),
+        TimerPreset(R.string.preset_90_min, R.string.preset_90m_short, 90 * 60 * 1000L, "preset_90m_button"),
       )
     }
 
@@ -388,88 +419,124 @@ fun WifiSleepTimerScreen() {
       containerColor = NightObsidian,
       contentWindowInsets = WindowInsets.safeDrawing,
       bottomBar = {
-        NavigationBar(
-          containerColor = NightSurfaceElevated,
-          contentColor = TextPrimaryNight,
-          tonalElevation = 8.dp,
-        ) {
-          NavigationBarItem(
-            selected = selectedTab == MainTab.TIMER,
-            onClick = { selectedTab = MainTab.TIMER },
-            icon = {
-              Icon(
-                imageVector = Icons.Filled.Bedtime,
-                contentDescription = str(R.string.nav_timer),
-              )
-            },
-            label = {
-              Text(
-                text = str(R.string.nav_timer),
-                fontWeight = if (selectedTab == MainTab.TIMER) FontWeight.Bold else FontWeight.Normal,
-              )
-            },
-            colors =
-              NavigationBarItemDefaults.colors(
-                selectedIconColor = SleepAmberBright,
-                selectedTextColor = SleepAmberBright,
-                indicatorColor = SleepAmberDim,
-                unselectedIconColor = TextSecondaryNight,
-                unselectedTextColor = TextSecondaryNight,
-              ),
-            modifier = Modifier.testTag("nav_tab_timer"),
-          )
+        if (selectedTab != MainTab.SETTINGS) {
+          NavigationBar(
+            containerColor = NightSurfaceElevated,
+            contentColor = TextPrimaryNight,
+            tonalElevation = 8.dp,
+          ) {
+            // 1. الشاشة الرئيسية (Home / Sleep Timer)
+            NavigationBarItem(
+              selected = selectedTab == MainTab.TIMER,
+              onClick = { selectedTab = MainTab.TIMER },
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.Home,
+                  contentDescription = str(R.string.title_wifi_sleep_timer),
+                )
+              },
+              label = {
+                Text(
+                  text = str(R.string.title_wifi_sleep_timer).take(15),
+                  fontWeight = if (selectedTab == MainTab.TIMER) FontWeight.Bold else FontWeight.Normal,
+                  maxLines = 1,
+                )
+              },
+              colors =
+                NavigationBarItemDefaults.colors(
+                  selectedIconColor = SleepAmberBright,
+                  selectedTextColor = SleepAmberBright,
+                  indicatorColor = SleepAmberDim,
+                  unselectedIconColor = TextSecondaryNight,
+                  unselectedTextColor = TextSecondaryNight,
+                ),
+              modifier = Modifier.testTag("nav_tab_timer"),
+            )
 
-          NavigationBarItem(
-            selected = selectedTab == MainTab.DATA_USAGE,
-            onClick = { selectedTab = MainTab.DATA_USAGE },
-            icon = {
-              Icon(
-                imageVector = Icons.Filled.DataUsage,
-                contentDescription = str(R.string.nav_data_usage),
-              )
-            },
-            label = {
-              Text(
-                text = str(R.string.nav_data_usage),
-                fontWeight = if (selectedTab == MainTab.DATA_USAGE) FontWeight.Bold else FontWeight.Normal,
-              )
-            },
-            colors =
-              NavigationBarItemDefaults.colors(
-                selectedIconColor = SleepAmberBright,
-                selectedTextColor = SleepAmberBright,
-                indicatorColor = SleepAmberDim,
-                unselectedIconColor = TextSecondaryNight,
-                unselectedTextColor = TextSecondaryNight,
-              ),
-            modifier = Modifier.testTag("nav_tab_data_usage"),
-          )
+            // 2. استخدام التطبيق (App Data Usage)
+            NavigationBarItem(
+              selected = selectedTab == MainTab.DATA_USAGE,
+              onClick = { selectedTab = MainTab.DATA_USAGE },
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.Apps,
+                  contentDescription = str(R.string.nav_data_usage),
+                )
+              },
+              label = {
+                Text(
+                  text = str(R.string.nav_data_usage),
+                  fontWeight = if (selectedTab == MainTab.DATA_USAGE) FontWeight.Bold else FontWeight.Normal,
+                  maxLines = 1,
+                )
+              },
+              colors =
+                NavigationBarItemDefaults.colors(
+                  selectedIconColor = SleepAmberBright,
+                  selectedTextColor = SleepAmberBright,
+                  indicatorColor = SleepAmberDim,
+                  unselectedIconColor = TextSecondaryNight,
+                  unselectedTextColor = TextSecondaryNight,
+                ),
+              modifier = Modifier.testTag("nav_tab_data_usage"),
+            )
 
-          NavigationBarItem(
-            selected = selectedTab == MainTab.DEVELOPER,
-            onClick = { selectedTab = MainTab.DEVELOPER },
-            icon = {
-              Icon(
-                imageVector = Icons.Filled.Person,
-                contentDescription = str(R.string.nav_developer),
-              )
-            },
-            label = {
-              Text(
-                text = str(R.string.nav_developer),
-                fontWeight = if (selectedTab == MainTab.DEVELOPER) FontWeight.Bold else FontWeight.Normal,
-              )
-            },
-            colors =
-              NavigationBarItemDefaults.colors(
-                selectedIconColor = SleepAmberBright,
-                selectedTextColor = SleepAmberBright,
-                indicatorColor = SleepAmberDim,
-                unselectedIconColor = TextSecondaryNight,
-                unselectedTextColor = TextSecondaryNight,
-              ),
-            modifier = Modifier.testTag("nav_tab_developer"),
-          )
+            // 3. إعداد (Setup - Screenshot 1)
+            NavigationBarItem(
+              selected = selectedTab == MainTab.SETUP,
+              onClick = { selectedTab = MainTab.SETUP },
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.Tune,
+                  contentDescription = str(R.string.nav_setup),
+                )
+              },
+              label = {
+                Text(
+                  text = str(R.string.nav_setup),
+                  fontWeight = if (selectedTab == MainTab.SETUP) FontWeight.Bold else FontWeight.Normal,
+                  maxLines = 1,
+                )
+              },
+              colors =
+                NavigationBarItemDefaults.colors(
+                  selectedIconColor = SleepAmberBright,
+                  selectedTextColor = SleepAmberBright,
+                  indicatorColor = SleepAmberDim,
+                  unselectedIconColor = TextSecondaryNight,
+                  unselectedTextColor = TextSecondaryNight,
+                ),
+              modifier = Modifier.testTag("nav_tab_setup"),
+            )
+
+            // 4. التشخيص (Diagnostics - Screenshot 2)
+            NavigationBarItem(
+              selected = selectedTab == MainTab.DIAGNOSTICS,
+              onClick = { selectedTab = MainTab.DIAGNOSTICS },
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.Speed,
+                  contentDescription = str(R.string.nav_diagnostics),
+                )
+              },
+              label = {
+                Text(
+                  text = str(R.string.nav_diagnostics),
+                  fontWeight = if (selectedTab == MainTab.DIAGNOSTICS) FontWeight.Bold else FontWeight.Normal,
+                  maxLines = 1,
+                )
+              },
+              colors =
+                NavigationBarItemDefaults.colors(
+                  selectedIconColor = SleepAmberBright,
+                  selectedTextColor = SleepAmberBright,
+                  indicatorColor = SleepAmberDim,
+                  unselectedIconColor = TextSecondaryNight,
+                  unselectedTextColor = TextSecondaryNight,
+                ),
+              modifier = Modifier.testTag("nav_tab_diagnostics"),
+            )
+          }
         }
       },
     ) { innerPadding ->
@@ -494,7 +561,7 @@ fun WifiSleepTimerScreen() {
                   .padding(horizontal = 24.dp, vertical = 16.dp),
               horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-          // Top Header & Live Wi-Fi Status Pill + Language Switch
+          // Top Header & Live Wi-Fi Status Pill + Language Switch + Settings
           TopHeaderSection(
             isWifiEnabled = isWifiEnabled,
             isArabic = isArabic,
@@ -502,6 +569,7 @@ fun WifiSleepTimerScreen() {
             onToggleLanguage = { isArabic = !isArabic },
             onWifiPillClick = { openSystemWifiPanel(baseContext) },
             onOpenAboutClick = { selectedTab = MainTab.DEVELOPER },
+            onOpenSettingsClick = { selectedTab = MainTab.SETTINGS },
           )
 
           Spacer(modifier = Modifier.height(16.dp))
@@ -629,18 +697,46 @@ fun WifiSleepTimerScreen() {
               }
             }
 
-            FlowRow(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.spacedBy(10.dp),
-              verticalArrangement = Arrangement.spacedBy(10.dp),
-              maxItemsInEachRow = 3,
+            // Primary Quick Presets Row (e.g. 15m, 30m, 45m, 60m)
+            Row(
+              modifier =
+                Modifier.fillMaxWidth()
+                  .testTag("preset_row_container"),
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
+              verticalAlignment = Alignment.CenterVertically,
             ) {
-              presets.forEach { preset ->
+              primaryPresets.forEach { preset ->
                 val isSelected =
                   !timerState.isRunning &&
                     timerState.remainingMillis == preset.durationMillis &&
                     !timerState.isFinished
-                PresetDurationButton(
+                PresetDurationCardButton(
+                  mainLabel = str(preset.shortLabelRes),
+                  subLabel = str(preset.labelRes),
+                  isSelected = isSelected,
+                  enabled = !timerState.isRunning,
+                  onClick = { TimerService.selectDuration(preset.durationMillis) },
+                  modifier = Modifier.weight(1f).testTag(preset.testTag),
+                )
+              }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Secondary presets row (5m, 10m, 90m)
+            Row(
+              modifier =
+                Modifier.fillMaxWidth()
+                  .testTag("preset_secondary_row_container"),
+              horizontalArrangement = Arrangement.spacedBy(8.dp),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              secondaryPresets.forEach { preset ->
+                val isSelected =
+                  !timerState.isRunning &&
+                    timerState.remainingMillis == preset.durationMillis &&
+                    !timerState.isFinished
+                PresetChipButton(
                   label = str(preset.labelRes),
                   isSelected = isSelected,
                   enabled = !timerState.isRunning,
@@ -750,14 +846,16 @@ fun WifiSleepTimerScreen() {
 
           Spacer(modifier = Modifier.height(16.dp))
 
-          // Sleep & Battery Savings Card with Toggles
+          // Sleep & Battery Savings Card with Toggles & History
           SleepStatsAndFeaturesCard(
             totalSessions = totalSessions,
             totalMinutesSaved = totalMinutesSaved,
             lastTimestamp = lastTimestamp,
+            shutoffHistory = shutoffHistory,
             vibrationEnabled = vibrationEnabled,
             shakeEnabled = shakeEnabled,
             str = str,
+            onOpenHistoryOverlay = { showHistoryOverlay = true },
             onVibrationToggle = { enabled ->
               vibrationEnabled = enabled
               settingsPrefs.edit().putBoolean(TimerService.KEY_VIBRATION_ENABLED, enabled).apply()
@@ -788,13 +886,39 @@ fun WifiSleepTimerScreen() {
         BackHandler { selectedTab = MainTab.TIMER }
         DataUsageScreen(
           str = str,
-          onOpenAboutClick = { selectedTab = MainTab.DEVELOPER },
+          onOpenAboutClick = { selectedTab = MainTab.SETTINGS },
+        )
+      }
+      MainTab.SETUP -> {
+        BackHandler { selectedTab = MainTab.TIMER }
+        SetupScreen(
+          str = str,
+          onOpenSettingsClick = { selectedTab = MainTab.SETTINGS },
+        )
+      }
+      MainTab.DIAGNOSTICS -> {
+        BackHandler { selectedTab = MainTab.TIMER }
+        DiagnosticsScreen(
+          str = str,
+          onOpenSettingsClick = { selectedTab = MainTab.SETTINGS },
         )
       }
       MainTab.DEVELOPER -> {
+        BackHandler { selectedTab = MainTab.TIMER }
         DeveloperScreen(
           str = str,
           onNavigateBack = { selectedTab = MainTab.TIMER },
+        )
+      }
+      MainTab.SETTINGS -> {
+        AppSettingsScreen(
+          str = str,
+          onBackClick = { selectedTab = MainTab.TIMER },
+          onToggleLanguage = {
+            isArabic = !isArabic
+            settingsPrefs.edit().putBoolean("is_arabic", isArabic).apply()
+          },
+          onOpenAboutClick = { selectedTab = MainTab.DEVELOPER },
         )
       }
     }
@@ -817,6 +941,20 @@ fun WifiSleepTimerScreen() {
         AboutDeveloperDialog(
           str = str,
           onDismiss = { showAboutDeveloperDialog = false },
+        )
+      }
+
+      // Auto-Shutoff History Overlay
+      if (showHistoryOverlay) {
+        AutoShutoffHistoryOverlay(
+          history = shutoffHistory,
+          str = str,
+          onDismiss = { showHistoryOverlay = false },
+          onClearHistory = {
+            TimerService.clearShutoffHistory(baseContext)
+            shutoffHistory = emptyList()
+            Toast.makeText(baseContext, str(R.string.history_cleared_toast), Toast.LENGTH_SHORT).show()
+          },
         )
       }
     }
@@ -1061,9 +1199,11 @@ private fun SleepStatsAndFeaturesCard(
   totalSessions: Int,
   totalMinutesSaved: Long,
   lastTimestamp: Long,
+  shutoffHistory: List<Long>,
   vibrationEnabled: Boolean,
   shakeEnabled: Boolean,
   str: (Int) -> String,
+  onOpenHistoryOverlay: () -> Unit,
   onVibrationToggle: (Boolean) -> Unit,
   onShakeToggle: (Boolean) -> Unit,
 ) {
@@ -1148,15 +1288,160 @@ private fun SleepStatsAndFeaturesCard(
         }
       }
 
-      // Last Shutdown Time
-      if (lastTimestamp > 0L) {
-        Spacer(modifier = Modifier.height(8.dp))
-        val dateStr = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(lastTimestamp))
-        Text(
-          text = "${str(R.string.stats_last_time)}: $dateStr",
-          style = MaterialTheme.typography.bodySmall,
-          color = TextMutedNight,
-        )
+      Spacer(modifier = Modifier.height(16.dp))
+      HorizontalDivider(color = NightOutline.copy(alpha = 0.5f), thickness = 1.dp)
+      Spacer(modifier = Modifier.height(12.dp))
+
+      // History Section Header
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+          Icon(
+            imageVector = Icons.Filled.History,
+            contentDescription = null,
+            tint = SleepAmber,
+            modifier = Modifier.size(18.dp),
+          )
+          Text(
+            text = str(R.string.history_section_title),
+            style = MaterialTheme.typography.titleSmall,
+            color = TextPrimaryNight,
+            fontWeight = FontWeight.Bold,
+          )
+          if (shutoffHistory.isNotEmpty()) {
+            Surface(
+              shape = RoundedCornerShape(50),
+              color = SleepAmberDim,
+            ) {
+              Text(
+                text = "${shutoffHistory.size}/5",
+                style = MaterialTheme.typography.labelSmall,
+                color = SleepAmberBright,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+              )
+            }
+          }
+        }
+
+        if (shutoffHistory.isNotEmpty()) {
+          TextButton(
+            onClick = onOpenHistoryOverlay,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.testTag("open_history_overlay_button"),
+          ) {
+            Text(
+              text = str(R.string.history_view_button),
+              style = MaterialTheme.typography.labelSmall,
+              color = SleepAmberBright,
+              fontWeight = FontWeight.Bold,
+            )
+          }
+        }
+      }
+
+      Spacer(modifier = Modifier.height(8.dp))
+
+      // History List (last 5 timestamps)
+      if (shutoffHistory.isEmpty()) {
+        Surface(
+          shape = RoundedCornerShape(12.dp),
+          color = NightSurface,
+          border = BorderStroke(1.dp, NightOutline.copy(alpha = 0.5f)),
+          modifier = Modifier.fillMaxWidth().testTag("history_empty_card"),
+        ) {
+          Text(
+            text = str(R.string.history_empty),
+            style = MaterialTheme.typography.bodySmall,
+            color = TextMutedNight,
+            modifier = Modifier.padding(12.dp),
+          )
+        }
+      } else {
+        Column(
+          modifier = Modifier.fillMaxWidth().testTag("history_list_container"),
+          verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+          val dateFormat = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+          shutoffHistory.take(5).forEachIndexed { index, timestamp ->
+            val dateStr = dateFormat.format(Date(timestamp))
+            val isFirst = index == 0
+            Surface(
+              shape = RoundedCornerShape(10.dp),
+              color = if (isFirst) SleepAmberDim.copy(alpha = 0.25f) else NightSurface,
+              border =
+                BorderStroke(
+                  1.dp,
+                  if (isFirst) SleepAmber.copy(alpha = 0.4f) else NightOutline.copy(alpha = 0.5f),
+                ),
+              modifier = Modifier.fillMaxWidth().testTag("history_item_$index"),
+            ) {
+              Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+              ) {
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                  Surface(
+                    shape = CircleShape,
+                    color = if (isFirst) SleepAmber else NightSurfaceElevated,
+                    modifier = Modifier.size(20.dp),
+                  ) {
+                    Box(contentAlignment = Alignment.Center) {
+                      Text(
+                        text = "#${index + 1}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isFirst) NightObsidian else TextSecondaryNight,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                      )
+                    }
+                  }
+                  Column {
+                    Text(
+                      text = dateStr,
+                      style = MaterialTheme.typography.bodySmall,
+                      color = TextPrimaryNight,
+                      fontWeight = if (isFirst) FontWeight.SemiBold else FontWeight.Normal,
+                    )
+                    Text(
+                      text = str(R.string.history_event_desc),
+                      style = MaterialTheme.typography.labelSmall,
+                      color = TextMutedNight,
+                      fontSize = 10.sp,
+                    )
+                  }
+                }
+
+                if (isFirst) {
+                  Surface(
+                    shape = RoundedCornerShape(50),
+                    color = WifiActiveGreen.copy(alpha = 0.15f),
+                  ) {
+                    Text(
+                      text = str(R.string.history_badge_recent),
+                      style = MaterialTheme.typography.labelSmall,
+                      color = WifiActiveGreen,
+                      fontSize = 10.sp,
+                      fontWeight = FontWeight.Bold,
+                      modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
+                  }
+                }
+              }
+            }
+          }
+        }
       }
 
       Spacer(modifier = Modifier.height(14.dp))
@@ -1232,6 +1517,178 @@ private fun SleepStatsAndFeaturesCard(
 }
 
 @Composable
+private fun AutoShutoffHistoryOverlay(
+  history: List<Long>,
+  str: (Int) -> String,
+  onDismiss: () -> Unit,
+  onClearHistory: () -> Unit,
+) {
+  val dateFormat = SimpleDateFormat("EEEE, dd MMM yyyy • hh:mm:ss a", Locale.getDefault())
+
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    modifier = Modifier.testTag("history_overlay_dialog"),
+    containerColor = NightSurfaceElevated,
+    icon = {
+      Surface(
+        shape = CircleShape,
+        color = SleepAmberDim,
+        modifier = Modifier.size(48.dp),
+      ) {
+        Box(contentAlignment = Alignment.Center) {
+          Icon(
+            imageVector = Icons.Filled.History,
+            contentDescription = null,
+            tint = SleepAmber,
+            modifier = Modifier.size(24.dp),
+          )
+        }
+      }
+    },
+    title = {
+      Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+          text = str(R.string.history_overlay_title),
+          style = MaterialTheme.typography.titleLarge,
+          color = TextPrimaryNight,
+          fontWeight = FontWeight.Bold,
+          textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+          text = str(R.string.history_section_subtitle),
+          style = MaterialTheme.typography.bodySmall,
+          color = TextSecondaryNight,
+          textAlign = TextAlign.Center,
+        )
+      }
+    },
+    text = {
+      Column(
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+      ) {
+        if (history.isEmpty()) {
+          Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = NightSurface,
+            border = BorderStroke(1.dp, NightOutline.copy(alpha = 0.5f)),
+            modifier = Modifier.fillMaxWidth(),
+          ) {
+            Text(
+              text = str(R.string.history_empty),
+              style = MaterialTheme.typography.bodyMedium,
+              color = TextMutedNight,
+              textAlign = TextAlign.Center,
+              modifier = Modifier.padding(16.dp),
+            )
+          }
+        } else {
+          history.take(5).forEachIndexed { index, timestamp ->
+            val dateFormatted = dateFormat.format(Date(timestamp))
+            val isFirst = index == 0
+            Surface(
+              shape = RoundedCornerShape(12.dp),
+              color = if (isFirst) SleepAmberDim.copy(alpha = 0.25f) else NightSurface,
+              border =
+                BorderStroke(
+                  1.dp,
+                  if (isFirst) SleepAmber.copy(alpha = 0.5f) else NightOutline,
+                ),
+              modifier = Modifier.fillMaxWidth().testTag("history_overlay_item_$index"),
+            ) {
+              Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+              ) {
+                Surface(
+                  shape = CircleShape,
+                  color = if (isFirst) SleepAmber else NightSurfaceElevated,
+                  modifier = Modifier.size(24.dp),
+                ) {
+                  Box(contentAlignment = Alignment.Center) {
+                    Text(
+                      text = "${index + 1}",
+                      style = MaterialTheme.typography.labelSmall,
+                      color = if (isFirst) NightObsidian else TextSecondaryNight,
+                      fontWeight = FontWeight.Bold,
+                      fontSize = 11.sp,
+                    )
+                  }
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                  ) {
+                    Text(
+                      text = str(R.string.history_event_desc),
+                      style = MaterialTheme.typography.labelMedium,
+                      color = if (isFirst) SleepAmberBright else TextPrimaryNight,
+                      fontWeight = FontWeight.SemiBold,
+                    )
+                    if (isFirst) {
+                      Surface(
+                        shape = RoundedCornerShape(50),
+                        color = WifiActiveGreen.copy(alpha = 0.15f),
+                      ) {
+                        Text(
+                          text = str(R.string.history_badge_recent),
+                          style = MaterialTheme.typography.labelSmall,
+                          color = WifiActiveGreen,
+                          fontSize = 10.sp,
+                          fontWeight = FontWeight.Bold,
+                          modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                      }
+                    }
+                  }
+                  Spacer(modifier = Modifier.height(2.dp))
+                  Text(
+                    text = dateFormatted,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondaryNight,
+                  )
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    confirmButton = {
+      Button(
+        onClick = onDismiss,
+        colors = ButtonDefaults.buttonColors(containerColor = SleepAmber, contentColor = NightObsidian),
+        modifier = Modifier.testTag("history_overlay_close_button"),
+      ) {
+        Text(text = str(R.string.custom_cancel_button), fontWeight = FontWeight.Bold)
+      }
+    },
+    dismissButton = {
+      if (history.isNotEmpty()) {
+        TextButton(
+          onClick = onClearHistory,
+          colors = ButtonDefaults.textButtonColors(contentColor = AlertCoral),
+          modifier = Modifier.testTag("history_overlay_clear_button"),
+        ) {
+          Icon(
+            imageVector = Icons.Filled.DeleteOutline,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+          )
+          Spacer(modifier = Modifier.width(4.dp))
+          Text(text = str(R.string.history_clear_button), fontWeight = FontWeight.SemiBold)
+        }
+      }
+    },
+  )
+}
+
+@Composable
 private fun TopHeaderSection(
   isWifiEnabled: Boolean,
   isArabic: Boolean,
@@ -1239,6 +1696,7 @@ private fun TopHeaderSection(
   onToggleLanguage: () -> Unit,
   onWifiPillClick: () -> Unit,
   onOpenAboutClick: () -> Unit,
+  onOpenSettingsClick: () -> Unit,
 ) {
   Column(
     modifier = Modifier.fillMaxWidth(),
@@ -1286,6 +1744,30 @@ private fun TopHeaderSection(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
       ) {
+        // Settings Gear Pill
+        Surface(
+          modifier =
+            Modifier.minimumInteractiveComponentSize()
+              .clip(RoundedCornerShape(50))
+              .clickable(onClick = onOpenSettingsClick)
+              .testTag("top_settings_button"),
+          shape = RoundedCornerShape(50),
+          color = NightSurfaceElevated,
+          border = BorderStroke(1.dp, NightOutline),
+        ) {
+          Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Icon(
+              imageVector = Icons.Filled.Settings,
+              contentDescription = "Settings",
+              tint = SleepAmber,
+              modifier = Modifier.size(16.dp),
+            )
+          }
+        }
+
         // About / Developer Info Pill
         Surface(
           modifier =
@@ -1709,6 +2191,120 @@ private fun PresetDurationButton(
       style = MaterialTheme.typography.labelMedium,
       fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
     )
+  }
+}
+
+@Composable
+private fun PresetDurationCardButton(
+  mainLabel: String,
+  subLabel: String,
+  isSelected: Boolean,
+  enabled: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val containerColor =
+    when {
+      !enabled -> NightSurface.copy(alpha = 0.5f)
+      isSelected -> SleepAmberDim
+      else -> NightSurfaceElevated
+    }
+  val borderColor =
+    when {
+      isSelected -> SleepAmber
+      else -> NightOutline
+    }
+  val textColor =
+    when {
+      !enabled -> TextMutedNight
+      isSelected -> SleepAmberBright
+      else -> TextPrimaryNight
+    }
+
+  Surface(
+    onClick = onClick,
+    enabled = enabled,
+    modifier =
+      modifier
+        .height(56.dp)
+        .minimumInteractiveComponentSize(),
+    shape = RoundedCornerShape(16.dp),
+    color = containerColor,
+    border = BorderStroke(if (isSelected) 2.dp else 1.dp, borderColor),
+    shadowElevation = if (isSelected) 4.dp else 0.dp,
+  ) {
+    Column(
+      modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 4.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.Center,
+    ) {
+      Text(
+        text = mainLabel,
+        style = MaterialTheme.typography.titleMedium,
+        color = textColor,
+        fontWeight = FontWeight.Bold,
+        maxLines = 1,
+      )
+      Text(
+        text = subLabel,
+        style = MaterialTheme.typography.labelSmall,
+        color = if (isSelected) SleepAmber else TextSecondaryNight,
+        fontSize = 10.sp,
+        maxLines = 1,
+      )
+    }
+  }
+}
+
+@Composable
+private fun PresetChipButton(
+  label: String,
+  isSelected: Boolean,
+  enabled: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val containerColor =
+    when {
+      !enabled -> NightSurface.copy(alpha = 0.5f)
+      isSelected -> SleepAmberDim
+      else -> NightSurfaceElevated
+    }
+  val borderColor =
+    when {
+      isSelected -> SleepAmber
+      else -> NightOutline
+    }
+  val textColor =
+    when {
+      !enabled -> TextMutedNight
+      isSelected -> SleepAmberBright
+      else -> TextSecondaryNight
+    }
+
+  Surface(
+    onClick = onClick,
+    enabled = enabled,
+    modifier =
+      modifier
+        .height(38.dp)
+        .minimumInteractiveComponentSize(),
+    shape = RoundedCornerShape(12.dp),
+    color = containerColor,
+    border = BorderStroke(if (isSelected) 1.5.dp else 1.dp, borderColor),
+  ) {
+    Box(
+      modifier = Modifier.fillMaxSize().padding(horizontal = 6.dp),
+      contentAlignment = Alignment.Center,
+    ) {
+      Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+        color = textColor,
+        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+        maxLines = 1,
+      )
+    }
   }
 }
 

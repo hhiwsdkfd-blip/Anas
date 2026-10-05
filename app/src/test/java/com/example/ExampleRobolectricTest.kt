@@ -39,8 +39,43 @@ class ExampleRobolectricTest {
     TimerService.selectDuration(5 * 60 * 1000L)
     assertEquals("05:00", TimerService.timerState.value.formattedTime)
 
+    TimerService.selectDuration(15 * 60 * 1000L)
+    assertEquals("15:00", TimerService.timerState.value.formattedTime)
+
     TimerService.selectDuration(30 * 60 * 1000L)
     assertEquals("30:00", TimerService.timerState.value.formattedTime)
+
+    TimerService.selectDuration(60 * 60 * 1000L)
+    assertEquals("60:00", TimerService.timerState.value.formattedTime)
+  }
+
+  @Test
+  fun `verify preset string resources exist`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    assertEquals("15m", context.getString(R.string.preset_15m_short))
+    assertEquals("30m", context.getString(R.string.preset_30m_short))
+    assertEquals("60m", context.getString(R.string.preset_60m_short))
+  }
+
+  @Test
+  fun `verify auto-shutoff history records and limits to 5 items`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    TimerService.clearShutoffHistory(context)
+    assertTrue(TimerService.getShutoffHistory(context).isEmpty())
+
+    val baseTime = 1700000000000L
+    for (i in 1..7) {
+      TimerService.addShutoffHistoryRecord(context, baseTime + (i * 1000L))
+    }
+
+    val history = TimerService.getShutoffHistory(context)
+    assertEquals(5, history.size)
+    // Most recent timestamp should be first
+    assertEquals(baseTime + 7000L, history[0])
+    assertEquals(baseTime + 6000L, history[1])
+
+    TimerService.clearShutoffHistory(context)
+    assertTrue(TimerService.getShutoffHistory(context).isEmpty())
   }
 
   @Test

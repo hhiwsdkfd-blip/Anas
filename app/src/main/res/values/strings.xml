@@ -8,12 +8,19 @@
     <string name="status_counting_down">COUNTING DOWN • AUTO WI-FI OFF</string>
     <string name="status_completed">00:00 • WI-FI TURNED OFF</string>
     <string name="select_duration_label">SELECT SLEEP DURATION</string>
+    <string name="quick_presets_title">Quick Presets</string>
     <string name="preset_5_min">5 min</string>
     <string name="preset_10_min">10 min</string>
     <string name="preset_15_min">15 min</string>
     <string name="preset_30_min">30 min</string>
     <string name="preset_45_min">45 min</string>
     <string name="preset_60_min">60 min</string>
+    <string name="preset_90_min">90 min</string>
+    <string name="preset_15m_short">15m</string>
+    <string name="preset_30m_short">30m</string>
+    <string name="preset_45m_short">45m</string>
+    <string name="preset_60m_short">60m</string>
+    <string name="preset_90m_short">90m</string>
     <string name="preset_10_sec_test">10s Test</string>
     <string name="button_custom_time">Custom</string>
     <string name="custom_time_title">Set Custom Duration</string>
@@ -26,6 +33,15 @@
     <string name="stats_battery_saved">Est. Battery Saved</string>
     <string name="stats_last_time">Last Auto-Shutoff</string>
     <string name="stats_no_history">None yet</string>
+    <string name="history_section_title">Auto-Shutoff History</string>
+    <string name="history_section_subtitle">Timestamps of the last 5 times Wi-Fi was disabled</string>
+    <string name="history_empty">No auto-shutoff events recorded yet.</string>
+    <string name="history_overlay_title">Auto-Shutoff History</string>
+    <string name="history_view_button">View History</string>
+    <string name="history_clear_button">Clear</string>
+    <string name="history_cleared_toast">History cleared</string>
+    <string name="history_badge_recent">Recent</string>
+    <string name="history_event_desc">Wi-Fi turned off automatically</string>
     <string name="feature_vibrate_label">Vibrate on Complete</string>
     <string name="feature_shake_label">Shake to add +5 min</string>
     <string name="shake_detected_toast">Added +5 minutes!</string>
@@ -55,7 +71,7 @@
     <string name="accessibility_service_desc">Enables the app to automatically toggle Wi-Fi OFF when your sleep timer countdown reaches 00:00 without requiring manual interaction.</string>
     <string name="auto_off_status_active">Direct Auto Shutoff: Active</string>
     <string name="auto_off_status_inactive">Enable Direct Auto Shutoff</string>
-    <string name="auto_off_card_desc">On modern Android (10–15), grant this one-time permission to allow the app to turn Wi-Fi OFF 100% automatically at 00:00 without touching the screen.</string>
+    <string name="auto_off_card_desc" formatted="false">On modern Android (10–15), grant this one-time permission to allow the app to turn Wi-Fi OFF 100% automatically at 00:00 without touching the screen.</string>
     <string name="auto_off_button_enable">Enable Auto Shutoff Now</string>
     <string name="auto_off_active_subtitle">Wi-Fi will turn off automatically at 00:00 without prompts.</string>
 
@@ -93,7 +109,7 @@
     <string name="sort_by_mobile">Mobile</string>
     <string name="app_details_title">App Internet Details</string>
     <string name="button_open_app_info">Open App Info</string>
-    <string name="percent_of_total">% of total traffic</string>
+    <string name="percent_of_total" formatted="false">% of total traffic</string>
     <string name="download_label">Download</string>
     <string name="upload_label">Upload</string>
     <string name="total_label">Total</string>
@@ -123,4 +139,91 @@
     <string name="feature_2_desc">Per-App Data Tracker: Wi-Fi vs Mobile usage breakdown</string>
     <string name="feature_3_desc">Shake to Extend: Add +5 minutes by gently shaking phone in bed</string>
     <string name="feature_4_desc">Gentle Tactile Feedback: Soft pulse vibration when timer completes</string>
+
+    <!-- Navigation Tabs from Screenshots -->
+    <string name="nav_setup">Setup</string>
+    <string name="nav_diagnostics">Diagnostics</string>
+
+    <!-- Setup Screen (Screenshot 1) -->
+    <string name="setup_screen_title">Setup</string>
+    <string name="setup_section_monitor_header">Data Monitor Setup</string>
+    <string name="setup_widget_config">Widget Settings</string>
+    <string name="setup_notif_config">Notification Settings</string>
+    <string name="setup_live_speed">Live Network Speed</string>
+    <string name="setup_section_widget">Widget</string>
+    <string name="setup_widget_interval_title">Widget update interval</string>
+    <string name="setup_minute_unit">minute</string>
+    <string name="setup_show_remaining_data">Show remaining data info</string>
+    <string name="setup_show_wifi_in_widget">Show Wi-Fi usage</string>
+    <string name="setup_refresh_widget_title">Update widget</string>
+    <string name="setup_refresh_widget_desc">Update the widget if experiencing issues</string>
+    <string name="setup_refresh_widget_done">Widget refreshed successfully</string>
+    <string name="setup_widget_toast">Widget configured</string>
+    <string name="setup_section_notification">Notification</string>
+    <string name="setup_notif_interval_title">Notification update interval</string>
+    <string name="setup_show_mobile_data">Show mobile data usage</string>
+    <string name="setup_show_wifi_in_notif">Show Wi-Fi usage</string>
+    <string name="setup_always_show_total_title">Always show total</string>
+    <string name="setup_always_show_total_desc">Always display total data consumed in notification regardless of selected options.</string>
+    <string name="setup_auto_hide_speed_title">Auto-hide network speed</string>
+    <string name="setup_auto_hide_speed_desc">Stop network speed notification when disconnected</string>
+    <string name="setup_combine_notifs_title">Combine notifications</string>
+    <string name="setup_combine_notifs_desc">Combine data monitor and network speed into a single notification.</string>
+    <string name="setup_combined_icon_title">Combined notifications</string>
+    <string name="setup_combined_icon_desc">Select icon to be displayed for combined notification</string>
+    <string name="setup_icon_selected_toast">Icon updated</string>
+    <string name="setup_lockscreen_notif_title">Enable notification on lock screen</string>
+    <string name="setup_section_consumption">Monitor Data Consumption</string>
+    <string name="setup_consumption_alert_title">Data usage alert</string>
+    <string name="setup_consumption_alert_desc">Get notified when reaching data limit</string>
+    <string name="setup_warning_level_title">Data warning trigger level</string>
+    <string name="setup_warning_at">At</string>
+    <string name="setup_of_data">of data</string>
+    <string name="setup_section_general">General</string>
+    <string name="setup_add_data_plan_title">Add data plan</string>
+    <string name="setup_current_plan">Add or update your data plan</string>
+    <string name="setup_plan_dialog_desc">Enter your monthly data quota in gigabytes:</string>
+    <string name="setup_plan_saved_toast">Data plan updated</string>
+    <string name="setup_reset_time_title">Data usage reset time</string>
+    <string name="setup_smart_allocation_title">Smart data allocation</string>
+    <string name="setup_smart_allocation_desc">Intelligently allocate your data using daily quotas and rollovers.</string>
+    <string name="setup_exclude_apps_title">Exclude applications</string>
+    <string name="setup_exclude_apps_desc">Exclude app traffic from data usage</string>
+    <string name="setup_exclude_apps_toast">App exclusions updated</string>
+    <string name="setup_select_interval">Select update interval</string>
+    <string name="setup_banner_quote">Widgets and/or notifications can provide easy access to the amount of data you\'ve used</string>
+
+    <!-- Diagnostics Screen (Screenshot 2) -->
+    <string name="diag_screen_title">Diagnostics</string>
+    <string name="diag_data_warning_notice">Network diagnostics may use around 20-30 MB of data. Make sure this is available in your plan, otherwise network charges may apply.</string>
+    <string name="diag_run_test_button">Run\nDiagnostics</string>
+    <string name="diag_current_connection">Current Connection</string>
+    <string name="diag_stage_ping">Testing Ping &amp; Latency…</string>
+    <string name="diag_stage_download">Testing Download…</string>
+    <string name="diag_stage_upload">Testing Upload…</string>
+    <string name="diag_ping_label">Ping</string>
+    <string name="diag_download_label">Download</string>
+    <string name="diag_upload_label">Upload</string>
+    <string name="diag_quality_label">Quality</string>
+    <string name="diag_history_title">Diagnostics History</string>
+    <string name="diag_no_history">No diagnostics recorded yet. Run a test to save results.</string>
+
+    <!-- Settings Screen (Screenshot 3) -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_app_theme_title">App Theme</string>
+    <string name="settings_theme_follow_system">Follow system theme</string>
+    <string name="settings_theme_dark">Dark Theme</string>
+    <string name="settings_theme_light">Light Theme</string>
+    <string name="settings_section_preferences">Preferences</string>
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_desc">Change application language</string>
+    <string name="settings_network_diag_title">Network Diagnostics</string>
+    <string name="settings_server_switch_desc">Switch diagnostic server</string>
+    <string name="settings_save_results_title">Save Results</string>
+    <string name="settings_save_results_desc">Save network diagnostic results</string>
+    <string name="settings_disable_touch_title">Touch Feedback</string>
+    <string name="settings_disable_touch_desc">Disable haptic feedback across app</string>
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_desc">Source, help and more</string>
 </resources>

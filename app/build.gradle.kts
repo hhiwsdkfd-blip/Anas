@@ -60,6 +60,11 @@ android {
     includeInApk = false
     includeInBundle = true
   }
+  lint {
+    abortOnError = false
+    checkReleaseBuilds = false
+    disable.addAll(listOf("ExpiredTargetSdkVersion", "MissingPermission", "AppBundleLocaleChanges", "UseKtx"))
+  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files

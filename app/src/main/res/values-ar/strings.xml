@@ -8,12 +8,19 @@
     <string name="status_counting_down">العد التنازلي يعمل • سيطفئ الواي فاي تلقائياً</string>
     <string name="status_completed">00:00 • تم إيقاف الواي فاي تلقائياً</string>
     <string name="select_duration_label">اختر مدة المؤقت</string>
+    <string name="quick_presets_title">أوقات جاهزة سريعة</string>
     <string name="preset_5_min">5 دقائق</string>
     <string name="preset_10_min">10 دقائق</string>
     <string name="preset_15_min">15 دقيقة</string>
     <string name="preset_30_min">30 دقيقة</string>
     <string name="preset_45_min">45 دقيقة</string>
     <string name="preset_60_min">60 دقيقة</string>
+    <string name="preset_90_min">90 دقيقة</string>
+    <string name="preset_15m_short">15 د</string>
+    <string name="preset_30m_short">30 د</string>
+    <string name="preset_45m_short">45 د</string>
+    <string name="preset_60m_short">60 د</string>
+    <string name="preset_90m_short">90 د</string>
     <string name="preset_10_sec_test">تجربة 10 ث</string>
     <string name="button_custom_time">وقت مخصص</string>
     <string name="custom_time_title">تحديد وقت نوم مخصص</string>
@@ -26,6 +33,15 @@
     <string name="stats_battery_saved">تقدير الطاقة الموفرة</string>
     <string name="stats_last_time">آخر إيقاف تلقائي</string>
     <string name="stats_no_history">لا توجد بعد</string>
+    <string name="history_section_title">سجل الإيقاف التلقائي</string>
+    <string name="history_section_subtitle">التوقيتات الزمنية لآخر 5 مرات تم فيها إطفاء الواي فاي</string>
+    <string name="history_empty">لا توجد عمليات إيقاف مسجلة بعد.</string>
+    <string name="history_overlay_title">سجل الإيقاف التلقائي</string>
+    <string name="history_view_button">عرض السجل</string>
+    <string name="history_clear_button">مسح</string>
+    <string name="history_cleared_toast">تم مسح السجل بنجاح</string>
+    <string name="history_badge_recent">الأحدث</string>
+    <string name="history_event_desc">تم إطفاء الواي فاي تلقائياً بالمؤقت</string>
     <string name="feature_vibrate_label">اهتزاز لطيف عند الانتهاء</string>
     <string name="feature_shake_label">هز الهاتف لإضافة +5 دقائق</string>
     <string name="shake_detected_toast">تمت إضافة +5 دقائق بالهز!</string>
@@ -123,4 +139,91 @@
     <string name="feature_2_desc">مراقب استهلاك البيانات: تفصيل استخدام الواي فاي وبيانات الشريحة لكل تطبيق</string>
     <string name="feature_3_desc">تمديد بهز الهاتف: إضافة +5 دقائق بمجرد هز الهاتف في السرير</string>
     <string name="feature_4_desc">اهتزاز تنبيهي لطيف: نبضات اهتزاز هادئة تنبهك عند إيقاف الواي فاي</string>
+
+    <!-- Navigation Tabs from Screenshots -->
+    <string name="nav_setup">إعداد</string>
+    <string name="nav_diagnostics">التشخيص</string>
+
+    <!-- Setup Screen (Screenshot 1) -->
+    <string name="setup_screen_title">إعداد</string>
+    <string name="setup_section_monitor_header">إعداد مراقب البيانات</string>
+    <string name="setup_widget_config">إعداد الأداة</string>
+    <string name="setup_notif_config">إعداد الإشعارات</string>
+    <string name="setup_live_speed">سرعة الشبكة الحية</string>
+    <string name="setup_section_widget">الأداة</string>
+    <string name="setup_widget_interval_title">الفاصل الزمني لتحديث الأداة</string>
+    <string name="setup_minute_unit">دقيقة</string>
+    <string name="setup_show_remaining_data">إظهار معلومات البيانات المتبقية</string>
+    <string name="setup_show_wifi_in_widget">عرض استخدام واي فاي</string>
+    <string name="setup_refresh_widget_title">تحديث الأداة</string>
+    <string name="setup_refresh_widget_desc">قم بتحديث الأداة إذا كانت تواجه مشكلة</string>
+    <string name="setup_refresh_widget_done">تم تحديث الأداة بنجاح</string>
+    <string name="setup_widget_toast">تم ضبط إعدادات الأداة</string>
+    <string name="setup_section_notification">إشعار</string>
+    <string name="setup_notif_interval_title">الفاصل الزمني لتحديث الإشعارات</string>
+    <string name="setup_show_mobile_data">إظهار استخدام بيانات الجوال</string>
+    <string name="setup_show_wifi_in_notif">عرض استخدام واي فاي</string>
+    <string name="setup_always_show_total_title">إظهار المجموع دائما</string>
+    <string name="setup_always_show_total_desc">اعرض دائما إجمالي البيانات المستهلكة في الإشعار بغض النظر عن الخيارات المحددة.</string>
+    <string name="setup_auto_hide_speed_title">إخفاء سرعة الشبكة تلقائيا</string>
+    <string name="setup_auto_hide_speed_desc">أوقف إشعار سرعة الشبكة عندما لا تكون الشبكة متصلة</string>
+    <string name="setup_combine_notifs_title">اجمع الإشعارات</string>
+    <string name="setup_combine_notifs_desc">اجمع بين مراقبة البيانات وسرعة الشبكة في إشعار واحد.</string>
+    <string name="setup_combined_icon_title">الإشعارات المجمعة</string>
+    <string name="setup_combined_icon_desc">اختر الأيقونة التي سيتم عرضها للإشعار المجمعة</string>
+    <string name="setup_icon_selected_toast">تم اختيار الأيقونة</string>
+    <string name="setup_lockscreen_notif_title">تفعيل الإشعار على شاشة القفل</string>
+    <string name="setup_section_consumption">راقب استهلاك البيانات</string>
+    <string name="setup_consumption_alert_title">إخطار استخدام البيانات</string>
+    <string name="setup_consumption_alert_desc">يتم إخطارك عندما يتم الوصول إلى حد البيانات</string>
+    <string name="setup_warning_level_title">مستوى تشغيل تحذير البيانات</string>
+    <string name="setup_warning_at">عند استهلاك</string>
+    <string name="setup_of_data">من البيانات</string>
+    <string name="setup_section_general">عام</string>
+    <string name="setup_add_data_plan_title">أضف خطة بيانات</string>
+    <string name="setup_current_plan">إضافة أو تحديث خطة البيانات الخاصة بك</string>
+    <string name="setup_plan_dialog_desc">أدخل سعة باقة البيانات الشهرية بالغيغابايت:</string>
+    <string name="setup_plan_saved_toast">تم تحديث خطة البيانات</string>
+    <string name="setup_reset_time_title">وقت إعادة تعيين البيانات المستخدمة</string>
+    <string name="setup_smart_allocation_title">التخصيص الذكي للبيانات</string>
+    <string name="setup_smart_allocation_desc">قم بتخصيص بياناتك بذكاء باستخدام الحصص اليومية وعمليات نقل البيانات.</string>
+    <string name="setup_exclude_apps_title">استبعاد التطبيقات</string>
+    <string name="setup_exclude_apps_desc">استبعاد حركة مرور التطبيق من استخدام البيانات</string>
+    <string name="setup_exclude_apps_toast">تم تحديث استبعاد التطبيقات</string>
+    <string name="setup_select_interval">اختر الفاصل الزمني للتحديث</string>
+    <string name="setup_banner_quote">يمكن أن توفر الأدوات و / أو الإشعارات وصولاً سهلاً إلى كمية البيانات التي استخدمتها</string>
+
+    <!-- Diagnostics Screen (Screenshot 2) -->
+    <string name="diag_screen_title">التشخيص</string>
+    <string name="diag_data_warning_notice">قد تستخدم تشخيصات الشبكة حوالي 20-30 ميغا بايت من البيانات. تأكد من توفر هذا في خطتك ، وإلا فقد يتم تطبيق رسوم الشبكة.</string>
+    <string name="diag_run_test_button">قم بتشغيل\nالتشخيص</string>
+    <string name="diag_current_connection">الاتصال الحالي</string>
+    <string name="diag_stage_ping">فحص الاستجابة (Ping)…</string>
+    <string name="diag_stage_download">قياس سرعة التحميل…</string>
+    <string name="diag_stage_upload">قياس سرعة الرفع…</string>
+    <string name="diag_ping_label">الاستجابة (Ping)</string>
+    <string name="diag_download_label">سرعة التحميل</string>
+    <string name="diag_upload_label">سرعة الرفع</string>
+    <string name="diag_quality_label">جودة الاتصال</string>
+    <string name="diag_history_title">سجل التشخيصات</string>
+    <string name="diag_no_history">لا توجد نتائج سابقة بعد. قم بتشغيل التشخيص لحفظ النتائج.</string>
+
+    <!-- Settings Screen (Screenshot 3) -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_section_appearance">المظهر</string>
+    <string name="settings_app_theme_title">سمة التطبيق</string>
+    <string name="settings_theme_follow_system">متابعة سمة النظام</string>
+    <string name="settings_theme_dark">الوضع الداكن</string>
+    <string name="settings_theme_light">الوضع الفاتح</string>
+    <string name="settings_section_preferences">التفضيلات</string>
+    <string name="settings_language_title">اللغة</string>
+    <string name="settings_language_desc">قم بتغيير لغة التطبيق</string>
+    <string name="settings_network_diag_title">تشخيصات الشبكة</string>
+    <string name="settings_server_switch_desc">خادم تبديل التشخيص</string>
+    <string name="settings_save_results_title">حفظ النتائج</string>
+    <string name="settings_save_results_desc">حفظ نتائج تشخيص الشبكة</string>
+    <string name="settings_disable_touch_title">تعطيل اللمس</string>
+    <string name="settings_disable_touch_desc">تعطيل ردود الفعل اللمسية عبر التطبيق</string>
+    <string name="settings_about_title">حول</string>
+    <string name="settings_about_desc">المصدر، المساعدة والمزيد</string>
 </resources>

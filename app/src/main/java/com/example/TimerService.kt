@@ -279,14 +279,22 @@ class TimerService : Service() {
 
   private fun recordSleepSession(context: Context, durationMillis: Long) {
     try {
+      val now = System.currentTimeMillis()
       val prefs = context.getSharedPreferences(PREFS_STATS, Context.MODE_PRIVATE)
       val currentSessions = prefs.getInt(KEY_TOTAL_SESSIONS, 0)
       val currentMinutes = prefs.getLong(KEY_TOTAL_MINUTES_SAVED, 0L)
       val minutes = (durationMillis / 60_000L).coerceAtLeast(1L)
+
+      val historyList = getShutoffHistory(context).toMutableList()
+      historyList.add(0, now)
+      val trimmedHistory = historyList.distinct().take(5)
+      val historyString = trimmedHistory.joinToString(",")
+
       prefs.edit()
         .putInt(KEY_TOTAL_SESSIONS, currentSessions + 1)
         .putLong(KEY_TOTAL_MINUTES_SAVED, currentMinutes + minutes)
-        .putLong(KEY_LAST_TIMESTAMP, System.currentTimeMillis())
+        .putLong(KEY_LAST_TIMESTAMP, now)
+        .putString(KEY_SHUTOFF_HISTORY, historyString)
         .apply()
     } catch (_: Exception) {}
   }
@@ -342,8 +350,51 @@ class TimerService : Service() {
     const val KEY_TOTAL_SESSIONS = "total_sessions"
     const val KEY_TOTAL_MINUTES_SAVED = "total_minutes_saved"
     const val KEY_LAST_TIMESTAMP = "last_timestamp"
+    const val KEY_SHUTOFF_HISTORY = "shutoff_history"
     const val KEY_VIBRATION_ENABLED = "vibration_enabled"
     const val KEY_SHAKE_ENABLED = "shake_enabled"
+
+    fun getShutoffHistory(context: Context): List<Long> {
+      return try {
+        val prefs = context.getSharedPreferences(PREFS_STATS, Context.MODE_PRIVATE)
+        if (prefs.contains(KEY_SHUTOFF_HISTORY)) {
+          val historyStr = prefs.getString(KEY_SHUTOFF_HISTORY, "") ?: ""
+          if (historyStr.isNotEmpty()) {
+            historyStr.split(",").mapNotNull { it.trim().toLongOrNull() }.take(5)
+          } else {
+            emptyList()
+          }
+        } else {
+          val last = prefs.getLong(KEY_LAST_TIMESTAMP, 0L)
+          if (last > 0L) listOf(last) else emptyList()
+        }
+      } catch (_: Exception) {
+        emptyList()
+      }
+    }
+
+    fun addShutoffHistoryRecord(context: Context, timestamp: Long) {
+      try {
+        val historyList = getShutoffHistory(context).toMutableList()
+        historyList.add(0, timestamp)
+        val trimmed = historyList.distinct().take(5)
+        val prefs = context.getSharedPreferences(PREFS_STATS, Context.MODE_PRIVATE)
+        prefs.edit()
+          .putString(KEY_SHUTOFF_HISTORY, trimmed.joinToString(","))
+          .putLong(KEY_LAST_TIMESTAMP, timestamp)
+          .apply()
+      } catch (_: Exception) {}
+    }
+
+    fun clearShutoffHistory(context: Context) {
+      try {
+        val prefs = context.getSharedPreferences(PREFS_STATS, Context.MODE_PRIVATE)
+        prefs.edit()
+          .putString(KEY_SHUTOFF_HISTORY, "")
+          .remove(KEY_LAST_TIMESTAMP)
+          .apply()
+      } catch (_: Exception) {}
+    }
 
     private const val CHANNEL_ID_TIMER = "wifi_sleep_timer_channel"
     private const val CHANNEL_ID_FINISHED = "wifi_sleep_timer_finished_channel"
